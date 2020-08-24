@@ -1,9 +1,22 @@
 #![no_std]
 #![feature(fmt_as_str)]
 
-use log::{Record, Level, Metadata, SetLoggerError, LevelFilter};
+use cstr_core::c_char;
+use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use core::fmt::Arguments;
 
 struct MWLogger;
+
+fn println_stdout(s: Arguments) {
+    extern "C" {
+        fn p_stdout(s: *const c_char);
+    }
+    let out_str = s.as_str().unwrap();
+    let ptr = out_str.as_ptr();
+    unsafe {
+        p_stdout(ptr as *const c_char);
+    }
+}
 
 impl log::Log for MWLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
@@ -11,13 +24,9 @@ impl log::Log for MWLogger {
     }
 
     fn log(&self, record: &Record) {
-        extern {
-            fn println_stdout(s: *const u8);
-        }
         if self.enabled(record.metadata()) {
-            let out_str = record.args().as_str().unwrap();
-            unsafe { println_stdout(out_str.as_ptr()) };
-            // println!("{} - {}", record.level(), record.args());
+
+            println_stdout(format_args!("{} - {}", record.level(), record.args()));
         }
     }
 
@@ -27,6 +36,5 @@ impl log::Log for MWLogger {
 static LOGGER: MWLogger = MWLogger;
 
 pub fn init() -> Result<(), SetLoggerError> {
-    log::set_logger(&LOGGER)
-        .map(|()| log::set_max_level(LevelFilter::Info))
+    log::set_logger(&LOGGER).map(|()| log::set_max_level(LevelFilter::Info))
 }
