@@ -1,4 +1,6 @@
 [workspace]
 members = [
-    "marrow-rt"
+    "marrow-rt",
+    "marrow-io",
+    "mw-log",
 ]
