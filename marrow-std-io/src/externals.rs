@@ -1,6 +1,5 @@
-use wasmi::{
-    Externals, RuntimeValue, RuntimeArgs, Trap, MemoryRef,
-};
+use std::convert::TryInto;
+use wasmi::{Externals, MemoryRef, RuntimeArgs, RuntimeValue, Trap};
 
 pub struct IoExternals {
     mem: MemoryRef,
@@ -8,9 +7,7 @@ pub struct IoExternals {
 
 impl IoExternals {
     pub fn new(mem: MemoryRef) -> Self {
-        IoExternals {
-            mem,
-        }
+        IoExternals { mem }
     }
 }
 
@@ -24,9 +21,15 @@ impl Externals for IoExternals {
     ) -> Result<Option<RuntimeValue>, Trap> {
         match index {
             FUNC_PRINTLN_STDOUT_INDEX => {
-                let a: i32 = args.nth_checked(0)?;
+                let ptr: i32 = args.nth_checked(0)?;
+                let size: u32 = args.nth_checked(0)?;
                 // get buffer from memony.
-                
+                let data = self
+                    .mem
+                    .get(ptr.try_into().unwrap(), size.try_into().unwrap())
+                    .unwrap();
+                let s = String::from_utf8(data).unwrap();
+                println!("{}", s);
                 Ok(None)
             }
             _ => panic!("Unimplemented function at {}", index),

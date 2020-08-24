@@ -5,12 +5,6 @@ use core::fmt::Arguments;
 use cstr_core::c_char;
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
-#[cfg(target_arch = "wasm32")]
-#[panic_handler]
-fn panic_handler(_: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
 struct MWLogger;
 
 fn println_stdout(s: Arguments) {
