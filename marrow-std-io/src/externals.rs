@@ -36,3 +36,9 @@ impl Externals for IoExternals {
         }
     }
 }
+
+// impl ModuleImportResolver for IoExternals {
+//     fn resolve_func(&self, field_name: &str, signature: &Signature) -> Result<FuncRef, Error> {
+//         let index =
+//     }
+// }
