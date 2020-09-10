@@ -1,9 +1,11 @@
+#![no_std]
+
+pub use wasmi::RuntimeValue;
 pub use wasmi::ValueType;
 
 extern crate alloc;
 
-mod modules;
-pub use modules::Modules;
+// declare trait of host;
+pub mod host;
 
-mod wasm_module;
-pub use wasm_module::WasmModule;
+pub mod native;
