@@ -6,12 +6,14 @@ use wasmi::{
 
 use core::cell::RefCell;
 
+/// Reference of WasmModule.
 pub struct WasmModuleRef {
     pub(crate) refs: ModuleRef,
     pub(crate) external: RefCell<ExternalsBuilder>,
 }
 
 impl WasmModuleRef {
+    /// invoke export function.
     pub fn invoke_export(
         &self,
         func_name: &str,

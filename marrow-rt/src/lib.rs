@@ -7,7 +7,8 @@ pub use wasmi::ValueType;
 extern crate alloc;
 
 mod native;
-pub use native::{ExternalsBuilder, NativeFunc, NativeModule, NativeModuleRef};
+pub(crate) use native::ExternalsBuilder;
+pub use native::{NativeFunc, NativeModule, NativeModuleRef};
 
 mod wasm;
 pub use wasm::{StartFunctionName, WasmModule, WasmModuleBuilder, WasmModuleRef};

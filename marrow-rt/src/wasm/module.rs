@@ -1,5 +1,6 @@
 use wasmi::Module;
 
+/// Explain `Webassembly` of modules.
 pub struct WasmModule {
     pub(crate) module: Module,
     pub name: &'static str,

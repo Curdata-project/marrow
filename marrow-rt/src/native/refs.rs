@@ -3,6 +3,7 @@ use alloc::format;
 use alloc::rc::Rc;
 use wasmi::{Error, FuncInstance, FuncRef, ModuleImportResolver, Signature};
 
+/// Reference of `NativeModule`.
 #[derive(Clone, Debug)]
 pub struct NativeModuleRef {
     pub(crate) native: Rc<NativeModule>,
@@ -10,6 +11,7 @@ pub struct NativeModuleRef {
 }
 
 impl NativeModuleRef {
+    /// Create reference form `NativeModule`.
     pub fn new(loaded_module: NativeModule, offset: usize) -> NativeModuleRef {
         NativeModuleRef {
             native: loaded_module.alloc_module(),
@@ -17,10 +19,12 @@ impl NativeModuleRef {
         }
     }
 
+    /// Get begin index of these module.
     pub fn begin_index(&self) -> usize {
         self.offset
     }
 
+    /// Get end index of these module.
     pub fn end_index(&self) -> usize {
         self.offset + self.native.funcs.len()
     }

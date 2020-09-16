@@ -22,11 +22,6 @@ impl Default for ExternalsBuilder {
 }
 
 impl ExternalsBuilder {
-    pub fn with_resolver(mut self, resolver: NativeModuleRef) -> Self {
-        self.push_resolver(resolver);
-        self
-    }
-
     pub fn push_resolver(&mut self, resolver: NativeModuleRef) {
         self.end = resolver.offset;
         self.tree.insert(resolver.offset, resolver);
