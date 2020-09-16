@@ -1,0 +1,14 @@
+use wasmi::Module;
+
+pub struct WasmModule {
+    pub(crate) module: Module,
+    pub name: &'static str,
+}
+
+impl WasmModule {
+    pub fn from_buffer<B: AsRef<[u8]>>(name: &'static str, buffer: B) -> Self {
+        // TODO: deal error of instant.
+        let module = Module::from_buffer(buffer).unwrap();
+        WasmModule { module, name }
+    }
+}

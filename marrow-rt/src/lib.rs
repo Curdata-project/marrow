@@ -6,11 +6,8 @@ pub use wasmi::ValueType;
 
 extern crate alloc;
 
-// declare trait of host;
-pub mod host;
-
-pub mod module;
-pub mod wasm;
-
 mod native;
-pub use self::native::{ExternalsBuilder, NativeFunc, NativeModule, NativeModuleRef};
+pub use native::{ExternalsBuilder, NativeFunc, NativeModule, NativeModuleRef};
+
+mod wasm;
+pub use wasm::{StartFunctionName, WasmModule, WasmModuleBuilder, WasmModuleRef};

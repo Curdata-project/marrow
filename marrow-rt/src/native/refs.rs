@@ -3,6 +3,7 @@ use alloc::format;
 use alloc::rc::Rc;
 use wasmi::{Error, FuncInstance, FuncRef, ModuleImportResolver, Signature};
 
+#[derive(Clone)]
 pub struct NativeModuleRef {
     pub(crate) native: Rc<NativeModule>,
     pub(crate) offset: usize,

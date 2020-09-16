@@ -5,6 +5,7 @@ Marrow 是一个安全的运行时环境，Marrow 提供了一套层次化的API
 
 - [ ] Marrow
   - [X] NativeModule.
+  - [X] WasmModule.
   - [ ] API Manager.
   - [X] Target for (win, mac, linux).
   - [ ] Target for (web, embedded).
