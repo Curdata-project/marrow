@@ -4,6 +4,7 @@ use super::NativeModuleRef;
 
 use alloc::collections::BTreeMap;
 
+#[derive(Debug)]
 pub struct ExternalsBuilder {
     pub(crate) tree: BTreeMap<usize, NativeModuleRef>,
     pub(crate) instance: Option<ModuleRef>,
@@ -31,9 +32,8 @@ impl ExternalsBuilder {
         self.tree.insert(resolver.offset, resolver);
     }
 
-    pub fn with_module(mut self, module: ModuleRef) -> Self {
+    pub(crate) fn push_module(&mut self, module: ModuleRef) {
         self.instance = Some(module);
-        self
     }
 }
 

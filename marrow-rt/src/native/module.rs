@@ -1,6 +1,7 @@
 use super::NativeFunc;
 use alloc::rc::Rc;
 
+#[derive(Debug)]
 pub struct NativeModule {
     pub name: &'static str,
     pub(crate) funcs: &'static [NativeFunc],

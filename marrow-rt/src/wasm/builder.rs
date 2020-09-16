@@ -113,7 +113,7 @@ impl<'a> WasmModuleBuilder<'a> {
     }
 }
 
-// Builder
+/// Builder。
 impl<'a> WasmModuleBuilder<'a> {
     pub fn build(self) -> WasmModuleRef {
         let module = self.module.unwrap();
@@ -129,9 +129,9 @@ impl<'a> WasmModuleBuilder<'a> {
         match self.start {
             StartFunctionName::Function(v) => {
                 let refs = ins.assert_no_start();
+                external.push_module(refs.clone());
                 // TODO: deal execute error. consider exit this machine.
                 refs.invoke_export(v, &[], &mut external).unwrap();
-
                 WasmModuleRef {
                     refs,
                     external: RefCell::new(external),
@@ -140,6 +140,7 @@ impl<'a> WasmModuleBuilder<'a> {
             StartFunctionName::Section => {
                 // TODO: deal execute error. consider exit this machine.
                 let refs = ins.run_start(&mut external).unwrap();
+                external.push_module(refs.clone());
                 WasmModuleRef {
                     refs,
                     external: RefCell::new(external),
