@@ -8,7 +8,8 @@ Marrow 是一个安全的运行时环境，Marrow 提供了一套层次化的API
   - [X] WasmModule.
   - [ ] API Manager.
   - [X] Target for (win, mac, linux).
-  - [ ] Target for (web, embedded).
+  - [ ] Target for web.
+  - [ ] Target for embedded.
   - [ ] Future/Promise for `cabi`.
   - [ ] I/O library for unversal platform.
   - [ ] Network library for unversal platform.

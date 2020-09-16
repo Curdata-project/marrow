@@ -1,6 +1,6 @@
 use super::{WasmModule, WasmModuleRef};
 use crate::{ExternalsBuilder, NativeModuleRef};
-use alloc::vec::Vec;
+// use alloc::vec::Vec;
 use core::cell::RefCell;
 use wasmi::{ImportsBuilder, ModuleInstance};
 
@@ -16,7 +16,7 @@ pub enum StartFunctionName {
 
 /// `Webassembly` module builder.
 pub struct WasmModuleBuilder<'a> {
-    pub(crate) permissions: Vec<&'static str>,
+    // pub(crate) permissions: Vec<&'static str>,
     pub(crate) module: Option<&'a WasmModule>,
     pub(crate) start: StartFunctionName,
     // this field must not none when inital module.
@@ -27,7 +27,7 @@ pub struct WasmModuleBuilder<'a> {
 impl<'a> Default for WasmModuleBuilder<'a> {
     fn default() -> Self {
         WasmModuleBuilder {
-            permissions: Vec::new(),
+            // permissions: Vec::new(),
             start: StartFunctionName::NoStart,
             externals_builder: ExternalsBuilder::default(),
             imports_builder: ImportsBuilder::default(),
@@ -83,19 +83,19 @@ impl<'a> WasmModuleBuilder<'a> {
     }
 }
 
-/// Add permission for this `wasm` module.
-impl<'a> WasmModuleBuilder<'a> {
-    /// Chain call.
-    pub fn with_permission(mut self, permission: &'static str) -> Self {
-        self.push_permission(permission);
-        self
-    }
+// /// Add permission for this `wasm` module.
+// impl<'a> WasmModuleBuilder<'a> {
+//     /// Chain call.
+//     pub fn with_permission(mut self, permission: &'static str) -> Self {
+//         self.push_permission(permission);
+//         self
+//     }
 
-    /// Use Mutable borrowed self.
-    pub fn push_permission(&mut self, permission: &'static str) {
-        self.permissions.push(permission);
-    }
-}
+//     /// Use Mutable borrowed self.
+//     pub fn push_permission(&mut self, permission: &'static str) {
+//         self.permissions.push(permission);
+//     }
+// }
 
 /// Set start function for `wasm` module.
 impl<'a> WasmModuleBuilder<'a> {
