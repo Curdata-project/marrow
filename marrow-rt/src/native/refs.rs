@@ -1,6 +1,7 @@
 use super::NativeModule;
 use alloc::format;
 use alloc::rc::Rc;
+use bitvec::prelude::*;
 use wasmi::{Error, FuncInstance, FuncRef, ModuleImportResolver, Signature};
 
 /// Reference of `NativeModule`.
@@ -8,6 +9,7 @@ use wasmi::{Error, FuncInstance, FuncRef, ModuleImportResolver, Signature};
 pub struct NativeModuleRef {
     pub(crate) native: Rc<NativeModule>,
     pub(crate) offset: usize,
+    pub(crate) permission: BitVec<LocalBits, u64>,
 }
 
 impl NativeModuleRef {
@@ -16,6 +18,7 @@ impl NativeModuleRef {
         NativeModuleRef {
             native: loaded_module.alloc_module(),
             offset,
+            permission: BitVec::new(),
         }
     }
 
@@ -38,6 +41,7 @@ impl ModuleImportResolver for NativeModuleRef {
         while func.name != field_name && i <= funcs_len {
             i += 1;
         }
+        // check `i` is resloveable.
         if i > funcs_len {
             Err(Error::Instantiation(format!("id is exceed.")))
         } else {

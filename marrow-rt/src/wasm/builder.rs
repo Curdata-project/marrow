@@ -1,6 +1,6 @@
 use super::{WasmModule, WasmModuleRef};
 use crate::{ExternalsBuilder, NativeModuleRef};
-// use alloc::vec::Vec;
+use alloc::vec::Vec;
 use core::cell::RefCell;
 use wasmi::{ImportsBuilder, ModuleInstance};
 
@@ -16,22 +16,21 @@ pub enum StartFunctionName {
 
 /// `Webassembly` module builder.
 pub struct WasmModuleBuilder<'a> {
-    // pub(crate) permissions: Vec<&'static str>,
+    pub(crate) permissions: Vec<&'a str>,
     pub(crate) module: Option<&'a WasmModule>,
     pub(crate) start: StartFunctionName,
-    // this field must not none when inital module.
-    pub(crate) externals_builder: ExternalsBuilder,
-    pub(crate) imports_builder: ImportsBuilder<'a>,
+    pub(crate) wasm_module: Vec<(&'a str, &'a mut WasmModuleRef)>,
+    pub(crate) native_module: Vec<(&'a str, &'a mut NativeModuleRef)>,
 }
 
 impl<'a> Default for WasmModuleBuilder<'a> {
     fn default() -> Self {
         WasmModuleBuilder {
-            // permissions: Vec::new(),
+            permissions: Vec::new(),
             start: StartFunctionName::NoStart,
-            externals_builder: ExternalsBuilder::default(),
-            imports_builder: ImportsBuilder::default(),
             module: None,
+            wasm_module: Vec::new(),
+            native_module: Vec::new(),
         }
     }
 }
@@ -41,31 +40,29 @@ impl<'a> Default for WasmModuleBuilder<'a> {
 /// These methods can use chain call and use mutable borrowed self
 impl<'a> WasmModuleBuilder<'a> {
     /// Chain call.
-    pub fn with_native_module(mut self, name: &str, resolver: &'a NativeModuleRef) -> Self {
+    pub fn with_native_module(mut self, name: &'a str, resolver: &'a mut NativeModuleRef) -> Self {
         self.push_native_module(name, resolver);
         self
     }
     /// Use Mutable borrowed self.
-    pub fn push_native_module(&mut self, name: &str, resolver: &'a NativeModuleRef) {
+    pub fn push_native_module(&mut self, name: &'a str, resolver: &'a mut NativeModuleRef) {
         // self.module = Some(module);
-        // Test has external?, if exists inital.
-        self.imports_builder.push_resolver(name, resolver);
-        self.externals_builder.push_resolver(resolver.clone());
+        self.native_module.push((name, resolver));
     }
 }
 
-/// Add `NativeModule` for this `wasm` module.
+/// Add `WasmModule` for this `wasm` module.
 impl<'a> WasmModuleBuilder<'a> {
     /// Chain call.
-    pub fn with_wasm_module(mut self, name: &str, resolver: &'a WasmModuleRef) -> Self {
+    pub fn with_wasm_module(mut self, name: &'a str, resolver: &'a mut WasmModuleRef) -> Self {
         self.push_wasm_module(name, resolver);
         self
     }
 
     /// Use Mutable borrowed self.
-    pub fn push_wasm_module(&mut self, name: &str, resolver: &'a WasmModuleRef) {
+    pub fn push_wasm_module(&mut self, name: &'a str, resolver: &'a mut WasmModuleRef) {
         //self.module = Some(module);
-        self.imports_builder.push_resolver(name, resolver);
+        self.wasm_module.push((name, resolver));
     }
 }
 
@@ -83,19 +80,19 @@ impl<'a> WasmModuleBuilder<'a> {
     }
 }
 
-// /// Add permission for this `wasm` module.
-// impl<'a> WasmModuleBuilder<'a> {
-//     /// Chain call.
-//     pub fn with_permission(mut self, permission: &'static str) -> Self {
-//         self.push_permission(permission);
-//         self
-//     }
+/// Add permission for this `wasm` module.
+impl<'a> WasmModuleBuilder<'a> {
+    /// Chain call.
+    pub fn with_permission(mut self, permission: &'a str) -> Self {
+        self.push_permission(permission);
+        self
+    }
 
-//     /// Use Mutable borrowed self.
-//     pub fn push_permission(&mut self, permission: &'static str) {
-//         self.permissions.push(permission);
-//     }
-// }
+    /// Use Mutable borrowed self.
+    pub fn push_permission(&mut self, permission: &'a str) {
+        self.permissions.push(permission);
+    }
+}
 
 /// Set start function for `wasm` module.
 impl<'a> WasmModuleBuilder<'a> {
@@ -113,19 +110,36 @@ impl<'a> WasmModuleBuilder<'a> {
     }
 }
 
-/// Builder。
+/// Builder
 impl<'a> WasmModuleBuilder<'a> {
     pub fn build(self) -> WasmModuleRef {
+        let mut external = ExternalsBuilder::default();
+        let mut imports = ImportsBuilder::default();
+
+        // parse id.
+
+        // build external.
+        for (name, reslover) in self.native_module {
+            reslover.permission.push(false);
+            external.push_resolver(reslover.clone());
+
+            log::info!(
+                "NativeModule {} offset is: {} at external.",
+                name,
+                external.end
+            );
+            reslover.offset = external.end;
+            imports.push_resolver(name, reslover);
+        }
+
+        // build imports.
+        for (name, resolver) in self.wasm_module {
+            imports.push_resolver(name, resolver);
+        }
+
+        // TODO: trow error.
         let module = self.module.unwrap();
-
-        // check format of permission.
-        // for x in &self.permissions {
-        //     let splited = x.split(".");
-        // }
-
-        // TODO: deal load error.
-        let mut external = self.externals_builder;
-        let ins = ModuleInstance::new(&module.module, &self.imports_builder).unwrap();
+        let ins = ModuleInstance::new(&module.module, &imports).unwrap();
         match self.start {
             StartFunctionName::Function(v) => {
                 let refs = ins.assert_no_start();
@@ -155,4 +169,13 @@ impl<'a> WasmModuleBuilder<'a> {
             }
         }
     }
+
+    // fn build_import_builder(self) -> ImportsBuilder {
+    //     let mut imports = ImportsBuilder::default();
+    //     let natives = &self.native_module;
+    //     for (name, resolver) in natives.into_iter() {
+    //         imports.push_resolver(name, resolver);
+    //     }
+    //     imports
+    // }
 }
