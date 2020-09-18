@@ -6,7 +6,8 @@ Marrow 是一个安全的运行时环境，Marrow 提供了一套层次化的API
 - [ ] Marrow
   - [X] NativeModule.
   - [X] WasmModule.
-  - [ ] Runtime.
+  - [X] Runtime.
+  - [ ] Multimodule support.
   - [ ] API Manager.
   - [X] Target for (win, mac, linux).
   - [ ] `Future`/`Promise` for `cabi`.
@@ -15,7 +16,7 @@ Marrow 是一个安全的运行时环境，Marrow 提供了一套层次化的API
   - [ ] Target for web.
   - [ ] Target for embedded.
 - [ ] Testing.
-  - [ ] Test alloc.
+  - [X] Test alloc.
   - [ ] Test wasmi in wasmi.
   - [ ] Test wasmi in embedded system.
 - [ ] Actor framework

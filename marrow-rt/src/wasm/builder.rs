@@ -4,16 +4,6 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use wasmi::{ImportsBuilder, ModuleInstance};
 
-/// Start function name for wasm module.
-pub enum StartFunctionName {
-    /// Use special function as start function.
-    Function(&'static str),
-    /// Use module's start function. Inital module failed if no start function in module.
-    Section,
-    /// Don't use module's start function. Even if module has start function.
-    NoStart,
-}
-
 /// `Webassembly` module builder.
 pub struct WasmModuleBuilder<'a> {
     pub(crate) permissions: Vec<&'a str>,
