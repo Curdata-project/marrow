@@ -12,6 +12,7 @@ impl Debug for UnionModule {
     }
 }
 
+///
 #[derive(Debug)]
 pub struct Module {
     pub(crate) name: &'static str,
