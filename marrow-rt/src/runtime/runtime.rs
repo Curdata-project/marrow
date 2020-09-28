@@ -1,7 +1,7 @@
 // use crate::module::{UnionModule, UnionRef};
 use crate::{
     Error, ModuleName, NativeInstance, NativeModule, NativeModuleRef, RuntimeValue,
-    StartFunctionName, WasmModuleRef,
+    StartFunctionName, WasmModule, WasmModuleRef,
 };
 use alloc::collections::BTreeMap;
 // use alloc::rc::Rc;
@@ -34,7 +34,7 @@ impl Runtime {
 
     pub fn run_wasm(
         &mut self,
-        module: &wasmi::Module,
+        module: WasmModule,
         name: &'static str,
         start: StartFunctionName,
         deps: &[ModuleName],
@@ -60,7 +60,7 @@ impl Runtime {
                 }
             }
         }
-        let ins = ModuleInstance::new(module, &imports_builder)?;
+        let ins = ModuleInstance::new(&module.module, &imports_builder)?;
         let refs = match start {
             StartFunctionName::Function(v) => {
                 let refs = ins.assert_no_start();
