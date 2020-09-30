@@ -1,7 +1,7 @@
 #![no_std]
 #![feature(fmt_as_str)]
 
-use log::{Level, Metadata, Record, SetLoggerError};
+use log::{LevelFilter, Metadata, Record, SetLoggerError};
 
 struct MWLogger {}
 
@@ -39,11 +39,10 @@ impl log::Log for MWLogger {
     fn flush(&self) {}
 }
 
-static LOGGER: MWLogger = MWLogger {};
+static LOGGER: &MWLogger = &MWLogger {};
 
 pub fn init() -> Result<(), SetLoggerError> {
-    // println("asassd");
-    log::set_logger(&LOGGER)?;
-    log::set_max_level(Level::Info.to_level_filter());
+    log::set_logger(LOGGER)?;
+    log::set_max_level(LevelFilter::Info);
     Ok(())
 }

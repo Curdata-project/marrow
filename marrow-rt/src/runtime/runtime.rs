@@ -41,13 +41,14 @@ impl Default for Runtime {
 impl Runtime {
     pub fn invoke_export(
         &self,
-        module: &str,
+        module_name: &str,
         func_name: &str,
         args: &[RuntimeValue],
     ) -> Result<Option<RuntimeValue>, Error> {
         // let external = self.external.try_borrow()?;
         let mut_external = &mut *self.external.try_borrow_mut()?;
-        let module = self.wasm_refs.get(module).unwrap();
+        let module = self.wasm_refs.get(module_name).unwrap();
+        log::info!("module: {}, func: {}", module_name, func_name);
         Ok(module.refs.invoke_export(func_name, args, mut_external)?)
     }
 
@@ -123,12 +124,10 @@ impl Externals for RuntimeExternal {
     ) -> Result<Option<RuntimeValue>, Trap> {
         log::info!("call index: {}", index);
         let mut r = self.native_refs.split_off(&index);
-        // TODO: process index.
         let (mindex, module) = r.pop_last().unwrap();
         log::info!("call funcs index is {}", mindex);
         let real_index = index - module.offset;
         let f = module.module.instance.funcs[real_index].func;
-        // Insert back
         let result = f(&module.refs.as_ref().unwrap(), args.as_ref());
         self.native_refs.insert(index, module);
         self.native_refs.append(&mut r);

@@ -4,8 +4,7 @@ exclude = [
 ]
 members = [
   "marrow-rt",
-  "marrow-std-io",
-  "mw-log",
+  "examples/mw-log",
   "examples/native-prints",
   "examples/native-maths",
   "examples/runtime-bin",
