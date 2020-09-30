@@ -90,7 +90,7 @@ impl Runtime {
                 }
             }
         }
-        for offset_index in offset_indexs {
+        for offset_index in offset_indexs.clone() {
             let native_ref = external.native_refs.get(&offset_index).unwrap();
             imports_builder.push_resolver("name: N", native_ref);
         }
