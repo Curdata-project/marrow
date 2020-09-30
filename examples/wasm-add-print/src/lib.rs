@@ -6,8 +6,13 @@ fn panic_handler(_panic: &core::panic::PanicInfo) -> ! {
     loop {}
 }
 
+// #[link(wasm_import_module = "maths")]
+extern "C" {
+    fn add() -> u32;
+}
+
 #[no_mangle]
-pub extern "C" fn entry() {
+pub fn entry() {
     mw_log::init().unwrap();
-    log::info!("{}", "hellp");
+    log::info!("hello {}", "world");
 }

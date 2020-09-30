@@ -3,7 +3,6 @@ use std::convert::TryInto;
 use wasmi::{ExternVal, ModuleRef};
 
 pub fn print(module: &ModuleRef, args: &[RuntimeValue]) -> Result<Option<RuntimeValue>, Error> {
-    log::info!("...");
     if let ExternVal::Memory(memory) = module.export_by_name("memory").unwrap() {
         let ptr = args[0].try_into().unwrap();
         let size: u32 = args[1].try_into().unwrap();

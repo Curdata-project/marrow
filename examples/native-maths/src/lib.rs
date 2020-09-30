@@ -6,7 +6,7 @@ pub fn add(_module: &ModuleRef, _args: &[RuntimeValue]) -> Result<Option<Runtime
 }
 
 pub fn mul(_module: &ModuleRef, _args: &[RuntimeValue]) -> Result<Option<RuntimeValue>, Error> {
-    Ok(Some(RuntimeValue::I32(1)))
+    Ok(Some(RuntimeValue::I32(2)))
 }
 
 static FUNCS: &[NativeFunc] = &[

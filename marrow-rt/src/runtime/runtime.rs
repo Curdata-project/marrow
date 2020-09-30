@@ -79,7 +79,7 @@ impl Runtime {
                 ModuleName::Native(n) => {
                     let nm = external.native_mods.get(n).unwrap();
                     log::info!("current offset is {}", self.offset);
-                    offset_indexs.push(self.offset);
+                    offset_indexs.push((self.offset, nm.instance.name));
                     let native_ref = NativeModuleRef {
                         module: nm.clone(),
                         refs: None,
@@ -90,9 +90,10 @@ impl Runtime {
                 }
             }
         }
-        for offset_index in offset_indexs.clone() {
+        for (offset_index, name) in offset_indexs.clone() {
             let native_ref = external.native_refs.get(&offset_index).unwrap();
-            imports_builder.push_resolver("name: N", native_ref);
+            log::info!("load index {}, name: {}", offset_index, name);
+            imports_builder.push_resolver(name, native_ref);
         }
         let ins = ModuleInstance::new(&module.module, &imports_builder)?;
         let refs = match start {
@@ -106,7 +107,7 @@ impl Runtime {
         };
         self.wasm_refs
             .insert(module.name, WasmModuleRef { refs: refs.clone() });
-        for offset_index in offset_indexs {
+        for (offset_index, _name) in offset_indexs {
             let native_ref = external.native_refs.get_mut(&offset_index).unwrap();
             native_ref.refs = Some(refs.clone());
         }
@@ -120,9 +121,10 @@ impl Externals for RuntimeExternal {
         index: usize,
         args: RuntimeArgs,
     ) -> Result<Option<RuntimeValue>, Trap> {
+        log::info!("call index: {}", index);
         let mut r = self.native_refs.split_off(&index);
         // TODO: process index.
-        let (mindex, module) = self.native_refs.pop_last().unwrap();
+        let (mindex, module) = r.pop_last().unwrap();
         log::info!("call funcs index is {}", mindex);
         let real_index = index - module.offset;
         let f = module.module.instance.funcs[real_index].func;
