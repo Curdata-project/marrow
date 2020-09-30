@@ -8,14 +8,17 @@ use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 struct MWLogger;
 
 fn println_stdout(s: Arguments) {
+    #[link(wasm_import_module = "prints")]
     extern "C" {
-        fn p_stdout(s: *const c_char, length: usize);
+        fn print(s: *const c_char, length: usize);
     }
+
     let out_str = s.as_str().unwrap();
     let ptr = out_str.as_ptr();
     let length = out_str.len();
+
     unsafe {
-        p_stdout(ptr as *const c_char, length);
+        print(ptr as *const c_char, length);
     }
 }
 

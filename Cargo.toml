@@ -1,6 +1,12 @@
 [workspace]
+exclude = [
+  "examples/wasm-add-print",
+]
 members = [
   "marrow-rt",
   "marrow-std-io",
   "mw-log",
+  "examples/native-prints",
+  "examples/native-maths",
+  "examples/runtime-bin",
 ]

@@ -25,6 +25,12 @@ impl ModuleImportResolver for NativeModuleRef {
         _signature: &Signature,
     ) -> Result<FuncRef, wasmi::Error> {
         let i = self.resolve_func_index(field_name)?;
+        log::info!(
+            "resolve funcs is {}, offset is: {}, i is: {}",
+            field_name,
+            self.offset,
+            i
+        );
         Ok(FuncInstance::alloc_host(
             _signature.clone(),
             i + self.offset,

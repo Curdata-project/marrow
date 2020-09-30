@@ -1,0 +1,13 @@
+[package]
+authors = ["tiannian <dtiannian@aliyun.com>"]
+edition = "2018"
+name = "runtime-bin"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+env_logger = "0.7.1"
+marrow-rt = {path = "../../marrow-rt"}
+native-maths = {path = "../native-maths"}
+native-prints = {path = "../native-prints"}

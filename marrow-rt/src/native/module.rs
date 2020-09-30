@@ -11,8 +11,8 @@ pub struct NativeModule {
 
 impl NativeModule {
     pub fn from_funcs(
-        funcs: &'static [NativeFunc],
         name: &'static str,
+        funcs: &'static [NativeFunc],
     ) -> Result<NativeModule, Error> {
         Ok(NativeModule { funcs, name })
     }
