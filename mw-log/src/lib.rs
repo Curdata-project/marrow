@@ -1,40 +1,49 @@
 #![no_std]
 #![feature(fmt_as_str)]
 
-use core::fmt::Arguments;
-use cstr_core::c_char;
-use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use log::{Level, Metadata, Record, SetLoggerError};
 
-struct MWLogger;
+struct MWLogger {}
 
-fn println_stdout(s: Arguments) {
-    extern "C" {
-        fn p_stdout(s: *const c_char, length: usize);
-    }
-    let out_str = s.as_str().unwrap();
-    let ptr = out_str.as_ptr();
-    let length = out_str.len();
+#[link(wasm_import_module = "prints")]
+extern "C" {
+    fn print(s: *const u8, length: usize);
+}
+
+pub fn println(s: &str) {
+    let ptr = s.as_ptr();
+    let length = s.len();
+
     unsafe {
-        p_stdout(ptr as *const c_char, length);
-    }
+        print(ptr, length);
+    };
 }
 
 impl log::Log for MWLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Info
+        metadata.level() <= log::max_level()
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            println_stdout(format_args!("{} - {}", record.level(), record.args()));
+        if !self.enabled(record.metadata()) {
+            return;
         }
+
+        let s = format_args!("{} - {}", record.level(), record.args())
+            .as_str()
+            .unwrap();
+
+        println(s);
     }
 
     fn flush(&self) {}
 }
 
-static LOGGER: MWLogger = MWLogger;
+static LOGGER: MWLogger = MWLogger {};
 
 pub fn init() -> Result<(), SetLoggerError> {
-    log::set_logger(&LOGGER).map(|()| log::set_max_level(LevelFilter::Info))
+    // println("asassd");
+    log::set_logger(&LOGGER)?;
+    log::set_max_level(Level::Info.to_level_filter());
+    Ok(())
 }

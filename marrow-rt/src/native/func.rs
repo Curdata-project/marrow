@@ -1,3 +1,4 @@
+use crate::Error;
 use core::fmt::{self, Debug};
 use wasmi::{ModuleRef, RuntimeValue};
 
@@ -6,7 +7,7 @@ use wasmi::{ModuleRef, RuntimeValue};
 /// Each `NativeFunc` persent a function define for host.
 pub struct NativeFunc {
     pub name: &'static str,
-    pub func: fn(&ModuleRef, &[RuntimeValue]) -> Option<RuntimeValue>,
+    pub func: fn(&ModuleRef, &[RuntimeValue]) -> Result<Option<RuntimeValue>, Error>,
 }
 
 impl Debug for NativeFunc {

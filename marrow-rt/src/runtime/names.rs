@@ -7,3 +7,8 @@ pub enum StartFunctionName {
     /// Don't use module's start function. Even if module has start function.
     NoStart,
 }
+
+pub enum ModuleName {
+    Native(&'static str),
+    Wasm(&'static str),
+}

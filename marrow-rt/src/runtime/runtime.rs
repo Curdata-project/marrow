@@ -1,95 +1,137 @@
-use crate::module::{UnionModule, UnionRef};
-use crate::{Error, Module, ModuleRef, NativeFunc, RuntimeValue, StartFunctionName};
+use crate::{
+    Error, ModuleName, NativeInstance, NativeModule, NativeModuleRef, RuntimeValue,
+    StartFunctionName, WasmModule, WasmModuleRef,
+};
 use alloc::collections::BTreeMap;
-use alloc::rc::Rc;
-// use core::cell::RefCell;
-use wasmi::{ImportsBuilder, ModuleInstance};
+use alloc::vec::Vec;
+use core::cell::RefCell;
+use wasmi::{Externals, ImportsBuilder, ModuleInstance, RuntimeArgs, Trap};
+
+pub struct RuntimeExternal {
+    pub(crate) native_mods: BTreeMap<&'static str, NativeInstance>,
+    pub(crate) native_refs: BTreeMap<usize, NativeModuleRef>,
+}
+
+impl Default for RuntimeExternal {
+    fn default() -> Self {
+        RuntimeExternal {
+            native_mods: BTreeMap::new(),
+            native_refs: BTreeMap::new(),
+        }
+    }
+}
 
 pub struct Runtime {
     pub(crate) offset: usize,
-    pub(crate) refs: BTreeMap<&'static str, ModuleRef>,
+    pub(crate) external: RefCell<RuntimeExternal>,
+    pub(crate) wasm_refs: BTreeMap<&'static str, WasmModuleRef>,
+}
+
+impl Default for Runtime {
+    fn default() -> Self {
+        let external = RefCell::new(RuntimeExternal::default());
+        Runtime {
+            wasm_refs: BTreeMap::new(),
+            offset: 0,
+            external,
+        }
+    }
 }
 
 impl Runtime {
-    pub fn new() -> Self {
-        Runtime {
-            offset: 0,
-            refs: BTreeMap::new(),
-        }
+    pub fn invoke_export(
+        &self,
+        module: &str,
+        func_name: &str,
+        args: &[RuntimeValue],
+    ) -> Result<Option<RuntimeValue>, Error> {
+        // let external = self.external.try_borrow()?;
+        let mut_external = &mut *self.external.try_borrow_mut()?;
+        let module = self.wasm_refs.get(module).unwrap();
+        Ok(module.refs.invoke_export(func_name, args, mut_external)?)
     }
 
-    fn run_wasm(
+    pub fn run_native(&mut self, module: NativeModule) -> Result<(), Error> {
+        // create native
+        let external = self.external.get_mut();
+        external
+            .native_mods
+            .insert(module.name, module.alloc_module());
+        Ok(())
+    }
+
+    pub fn run_wasm(
         &mut self,
-        module: &wasmi::Module,
+        module: WasmModule,
         start: StartFunctionName,
-        deps: &[&str],
-    ) -> Result<wasmi::ModuleRef, Error> {
+        deps: &[ModuleName],
+    ) -> Result<(), Error> {
         let mut imports_builder = ImportsBuilder::default();
-        for dep in deps {
-            if let Some(refs) = self.refs.get(dep) {
-                // if is native, set offsets.
-                if let UnionRef::NativeRef {
-                    offset: _,
-                    refs: inner_refs,
-                } = &refs.union
-                {
-                    // build native-wasm pair offset.
-                    let new_offset = self.offset + refs.get_native_offset();
-                    let new_refs = ModuleRef {
-                        module: refs.module.clone(),
-                        union: UnionRef::NativeRef {
-                            offset: new_offset,
-                            refs: inner_refs.clone(),
-                        },
-                    };
-                    imports_builder.push_resolver(*dep, &new_refs);
-                } else {
-                    imports_builder.push_resolver(*dep, refs);
+        let mut offset_indexs = Vec::new();
+        let external = self.external.get_mut();
+        let native_refs = &mut external.native_refs;
+        for dep_name in deps {
+            match dep_name {
+                ModuleName::Wasm(n) => {
+                    let m = self.wasm_refs.get(n).unwrap();
+                    imports_builder.push_resolver(module.name, m);
                 }
-            } else {
-                return Err(Error::NoRuningModule);
+                ModuleName::Native(n) => {
+                    let nm = external.native_mods.get(n).unwrap();
+                    log::info!("current offset is {}", self.offset);
+                    offset_indexs.push((self.offset, nm.instance.name));
+                    let native_ref = NativeModuleRef {
+                        module: nm.clone(),
+                        refs: None,
+                        offset: self.offset,
+                    };
+                    native_refs.insert(self.offset, native_ref);
+                    self.offset = nm.offset() + self.offset;
+                }
             }
         }
-        let ins = ModuleInstance::new(module, &imports_builder)?;
+        for (offset_index, name) in offset_indexs.clone() {
+            let native_ref = external.native_refs.get(&offset_index).unwrap();
+            log::info!("load index {}, name: {}", offset_index, name);
+            imports_builder.push_resolver(name, native_ref);
+        }
+        let ins = ModuleInstance::new(&module.module, &imports_builder)?;
         let refs = match start {
             StartFunctionName::Function(v) => {
                 let refs = ins.assert_no_start();
-                // TODO: deal execute error. consider exit this machine.
-                refs.invoke_export(v, &[], &mut wasmi::NopExternals)?;
+                refs.invoke_export(v, &[], external)?;
                 refs
             }
-            StartFunctionName::Section => {
-                // TODO: deal execute error. consider exit this machine.
-                ins.run_start(&mut wasmi::NopExternals)?
-            }
+            StartFunctionName::Section => ins.run_start(external)?,
             StartFunctionName::NoStart => ins.assert_no_start(),
         };
-        Ok(refs)
-    }
-
-    fn run_native(&mut self, _funcs: &'static [NativeFunc]) -> Result<(), Error> {
-        // create native
-        Ok(())
-    }
-
-    pub fn run(
-        &mut self,
-        name: &'static str,
-        m: Module,
-        start: Option<StartFunctionName>,
-        deps: &[&str],
-    ) -> Result<(), Error> {
-        match &m.module {
-            UnionModule::WasmModule { module } => {
-                let refs = self.run_wasm(&module, start.unwrap(), deps)?;
-                let r = ModuleRef {
-                    module: Rc::new(m),
-                    union: UnionRef::WasmRef { refs },
-                };
-                self.refs.insert(name, r);
-            }
-            UnionModule::NativeModule { funcs } => self.run_native(funcs)?,
+        self.wasm_refs
+            .insert(module.name, WasmModuleRef { refs: refs.clone() });
+        for (offset_index, _name) in offset_indexs {
+            let native_ref = external.native_refs.get_mut(&offset_index).unwrap();
+            native_ref.refs = Some(refs.clone());
         }
         Ok(())
+    }
+}
+
+impl Externals for RuntimeExternal {
+    fn invoke_index(
+        &mut self,
+        index: usize,
+        args: RuntimeArgs,
+    ) -> Result<Option<RuntimeValue>, Trap> {
+        log::info!("call index: {}", index);
+        let mut r = self.native_refs.split_off(&index);
+        // TODO: process index.
+        let (mindex, module) = r.pop_last().unwrap();
+        log::info!("call funcs index is {}", mindex);
+        let real_index = index - module.offset;
+        let f = module.module.instance.funcs[real_index].func;
+        // Insert back
+        let result = f(&module.refs.as_ref().unwrap(), args.as_ref());
+        self.native_refs.insert(index, module);
+        self.native_refs.append(&mut r);
+        Ok(result?)
     }
 }

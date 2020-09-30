@@ -1,5 +1,5 @@
 mod runtime;
 pub use runtime::Runtime;
 
-mod start_name;
-pub use start_name::StartFunctionName;
+mod names;
+pub use names::{ModuleName, StartFunctionName};
