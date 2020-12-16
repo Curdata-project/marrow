@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    'actor-bin',
+    # 'actor-lib',
+    'wstd',
+]
