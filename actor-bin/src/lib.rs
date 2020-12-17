@@ -5,13 +5,15 @@ extern crate alloc;
 
 use wstd::fs;
 use wstd::debug;
-use wstd::task;
-use alloc::boxed::Box;
+use wstd::runtime;
 
 #[no_mangle]
 pub extern "C" fn main() {
-    task::Task::spawn(Box::pin(async move{
+    let runtime = runtime::Runtime::new();
+
+    runtime.spawn(async move {
         let _r = fs::read_file("./test.txt").await;
+        let _r = fs::read_file("./test2.txt").await;
         debug::println("ok");
-    }));
+    });
 }
