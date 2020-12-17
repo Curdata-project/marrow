@@ -12,9 +12,8 @@ pub fn main(_arg: TokenStream, input: TokenStream) -> TokenStream {
         pub extern "C" fn _entry() {
             #parsed
             let runtime = wstd::runtime::Runtime::new();
-
             runtime.spawn(async move {
-                main()
+                main().await
             });
         }
     };
