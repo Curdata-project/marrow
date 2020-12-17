@@ -2,5 +2,5 @@
 members = [
     'actor-bin',
     'wstd',
-    'marrow'
+    'marrow-rt'
 ]
