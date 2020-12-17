@@ -15,3 +15,4 @@ opt-level = "s"
 
 [dependencies]
 wstd = {path = "../wstd"}
+wee_alloc = "0.4.5"

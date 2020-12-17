@@ -19,8 +19,7 @@ async function main () {
                 path = utf8decoder.decode(value);
 
                 fs.readFile(path, (err, data) => {
-                    console.log(err);
-                    actor_bin_instance.exports.call_read_file_callback_fn(fn, addr)
+                    actor_bin_instance.exports.call_read_file_callback_fn(fn, addr, 1)
                 });
                 return 0;
             }
