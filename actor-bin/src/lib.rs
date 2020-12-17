@@ -7,13 +7,9 @@ use wstd::fs;
 use wstd::debug;
 use wstd::runtime;
 
-#[no_mangle]
-pub extern "C" fn main() {
-    let runtime = runtime::Runtime::new();
-
-    runtime.spawn(async move {
-        let _r = fs::read_file("./test.txt").await;
-        let _r = fs::read_file("./test2.txt").await;
-        debug::println("ok");
-    });
+#[marrow::main]
+async fn main() {
+    let _r = fs::read_file("./test.txt").await;
+    debug::println("ok");
 }
+

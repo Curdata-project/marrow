@@ -11,4 +11,5 @@ pub mod fs;
 
 pub mod task;
 pub mod runtime;
+pub mod queue;
 

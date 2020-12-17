@@ -15,4 +15,5 @@ opt-level = "s"
 
 [dependencies]
 wstd = {path = "../wstd"}
+marrow = {path = "../marrow"}
 wee_alloc = "0.4.5"
