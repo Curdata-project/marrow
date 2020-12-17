@@ -1,6 +1,4 @@
 status = [
-  'test-linux',
-  'test-macos',
-  'test-windows'
+  'test-linux'
 ]
 delete_merged_branches = true
