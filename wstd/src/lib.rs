@@ -11,14 +11,8 @@ extern crate alloc;
 
 pub mod debug;
 pub mod fs;
-
-// mod utils;
 pub mod task;
 pub mod queue;
+mod macro_main;
+pub use macro_main::main;
 
-pub fn spawn_local<F>(future: F)
-    where
-        F: Future<Output = ()> + 'static,
-{
-    task::Task::spawn(Box::pin(future));
-}
