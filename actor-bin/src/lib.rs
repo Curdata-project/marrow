@@ -10,7 +10,7 @@ use wstd::debug;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[marrow::main]
+#[marrow_rt::main]
 async fn main() {
     let _r = fs::read_file("./test.txt").await;
     debug::println("ok");

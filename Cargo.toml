@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    'actor-bin',
     'wstd',
-    'marrow-rt'
+    'marrow-rt',
+    'actor-bin'
 ]
