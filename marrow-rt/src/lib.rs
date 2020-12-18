@@ -1,22 +1,15 @@
-extern crate proc_macro;
+#![no_std]
 
-use proc_macro::TokenStream;
-use quote::*;
-use syn::{parse_macro_input, ItemFn};
+extern crate alloc;
 
-#[proc_macro_attribute]
-pub fn main(_arg: TokenStream, input: TokenStream) -> TokenStream {
-    let parsed = parse_macro_input!(input as ItemFn);
-    let expanded = quote! {
-        #[no_mangle]
-        pub extern "C" fn _entry() {
-            #parsed
-            let runtime = wstd::runtime::Runtime::new();
-            runtime.spawn(async move {
-                main().await
-            });
-        }
-    };
-    TokenStream::from(expanded)
-    // expanded
-}
+mod module;
+pub use module::Module;
+
+mod instance;
+pub use instance::Instance;
+
+mod types;
+pub use types::Type;
+
+mod host;
+pub use host::Host;

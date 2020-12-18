@@ -1,9 +1,11 @@
 [package]
+name = "mw-rt"
+version = "0.1.0"
 authors = ["tiannian <dtiannian@aliyun.com>"]
 edition = "2018"
-name = "runtime"
-version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+mw-macros = { path = "../mw-macros" }
+mw-std = { path = "../mw-std" }

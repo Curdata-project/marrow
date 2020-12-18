@@ -3,16 +3,21 @@
 
 extern crate alloc;
 
-use wstd::fs;
-use wstd::debug;
-
+use mw_std::debug;
+use mw_std::fs;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[marrow_rt::main]
+#[mw_rt::async_main]
 async fn main() {
     let _r = fs::read_file("./test.txt").await;
     debug::println("ok");
 }
 
+// #[mw_rt::main]
+// fn main() {
+//     let _r = fs::read_file_callback("./test.txt", |_result| {
+//         debug::println("ok");
+//     });
+// }

@@ -1,7 +1,7 @@
-use core::cell::{RefCell, Cell};
+use alloc::boxed::Box;
 use alloc::collections::VecDeque;
 use alloc::rc::Rc;
-use alloc::boxed::Box;
+use core::cell::{Cell, RefCell};
 use core::future::Future;
 
 struct Queue {
@@ -33,7 +33,6 @@ pub struct Runtime {
     queue: Queue,
 }
 
-
 impl Runtime {
     pub fn new() -> Self {
         let queue = Queue {
@@ -41,21 +40,21 @@ impl Runtime {
             tasks: RefCell::new(VecDeque::new()),
         };
 
-        Self {
-            queue,
-        }
+        Self { queue }
     }
 
-    pub fn spawn<F>(self,future: F) where F: Future<Output = ()> + 'static,
+    pub fn spawn<F>(self, future: F)
+    where
+        F: Future<Output = ()> + 'static,
     {
-        crate::task::Task::spawn(Box::pin(future),self);
+        crate::task::Task::spawn(Box::pin(future), self);
     }
 
     pub(crate) fn push_task(&self, task: Rc<crate::task::Task>) {
         self.queue.tasks.borrow_mut().push_back(task);
 
-        if !self.queue.is_spinning.replace(true) { self.queue.run_all() }
+        if !self.queue.is_spinning.replace(true) {
+            self.queue.run_all()
+        }
     }
 }
-
-

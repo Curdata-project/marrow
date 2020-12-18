@@ -1,25 +1,24 @@
-use core::cell::{RefCell, Cell};
-use core::pin::Pin;
-use alloc::boxed::Box;
-use core::future::Future;
-use alloc::rc::Rc;
-use core::task::{Waker, RawWaker, RawWakerVTable, Poll, Context};
-use core::mem::ManuallyDrop;
 use crate::runtime::Runtime;
+use alloc::boxed::Box;
+use alloc::rc::Rc;
+use core::cell::{Cell, RefCell};
+use core::future::Future;
+use core::mem::ManuallyDrop;
+use core::pin::Pin;
+use core::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
 
 pub struct Task {
     inner: RefCell<Option<Inner>>,
 
     is_queued: Cell<bool>,
 
-    runtime:RefCell<Runtime>
+    runtime: RefCell<Runtime>,
 }
 
 struct Inner {
     future: Pin<Box<dyn Future<Output = ()> + 'static>>,
     waker: Waker,
 }
-
 
 impl Task {
     pub fn spawn(future: Pin<Box<dyn Future<Output = ()> + 'static>>, runtime: Runtime) {
@@ -41,7 +40,6 @@ impl Task {
         Task::wake_by_ref(&this);
     }
 
-
     //入队
     fn wake_by_ref(this: &Rc<Self>) {
         //如果为true，就返回
@@ -49,7 +47,7 @@ impl Task {
             return;
         }
 
-       let runtime = this.runtime.borrow_mut();
+        let runtime = this.runtime.borrow_mut();
         runtime.push_task(Rc::clone(this))
     }
 
@@ -57,7 +55,6 @@ impl Task {
     //自定义了一系列唤醒的行为
     //raw_wake raw_wake_by_ref都是入队
     unsafe fn into_raw_waker(this: Rc<Self>) -> RawWaker {
-
         unsafe fn raw_clone(ptr: *const ()) -> RawWaker {
             let ptr = ManuallyDrop::new(Rc::from_raw(ptr as *const Task));
             Task::into_raw_waker((*ptr).clone())
@@ -90,9 +87,7 @@ impl Task {
 
         //判断inner是否不为空
         let inner = match borrow.as_mut() {
-            Some(inner) => {
-                inner
-            },
+            Some(inner) => inner,
             None => return,
         };
 
@@ -111,4 +106,3 @@ impl Task {
         }
     }
 }
-

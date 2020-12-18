@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 async function main () {
-    let actor_bin_code = fs.readFileSync('target/wasm32-unknown-unknown/release/actor_bin.wasm');
+    let actor_bin_code = fs.readFileSync('target/wasm32-unknown-unknown/release/demo.wasm');
     
     let actor_bin_instance = null;
 
@@ -19,9 +19,7 @@ async function main () {
                 path = utf8decoder.decode(value);
 
                 fs.readFile(path, (err, data) => {
-                    if (err != null){
-                        return 0
-                    }
+                    console.log(fn, addr)
                     actor_bin_instance.exports.call_read_file_callback_fn(fn, addr, 1)
                 });
                 return 0;
@@ -31,7 +29,7 @@ async function main () {
 
     actor_bin_instance = (await WebAssembly.instantiate(actor_bin_code, import_object)).instance;
 
-    actor_bin_instance.exports.main()
+    actor_bin_instance.exports._entry()
 }
 
 main()
