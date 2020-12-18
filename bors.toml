@@ -1,5 +1,5 @@
 status = [
-  'Build'
+  'bors'
 ]
 use_squash_merge = true
 delete_merged_branches = true
