@@ -1,4 +1,4 @@
-const { actor_bin_instance } = require("../../index");
+const { actor_bin_instance } = require("../index");
 
 const print = (ptr, length) => {
   const value = actor_bin_instance.exports.memory.buffer.slice(ptr, ptr + length);

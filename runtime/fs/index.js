@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { actor_bin_instance } = require("../../index");
+const { actor_bin_instance } = require("../index");
 
 const _read_file_callback = (fn, addr, ptr, path_length) => {
   const value = actor_bin_instance.exports.memory.buffer.slice(ptr, ptr + path_length);

@@ -1,6 +1,6 @@
 const util = require("util");
 
-const { actor_bin_instance } = require("../../index");
+const { actor_bin_instance } = require("../index");
 
 const { memory, _malloc } = actor_bin_instance.exports;
 

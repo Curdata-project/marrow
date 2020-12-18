@@ -1,7 +1,7 @@
 const axios = request("axios");
 
-const { actor_bin_instance } = require("../../index");
-const { getValue, setValue } = require("../utils");
+const { actor_bin_instance } = require("../index");
+const { getValue, setValue } = require("./utils");
 
 const { call_request_callback_fn } = actor_bin_instance.exports;
 
