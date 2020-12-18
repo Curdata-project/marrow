@@ -1,5 +1,5 @@
 status = [
   'bors'
 ]
-use_squash_merge = true
-delete_merged_branches = true
+# use_squash_merge = true
+# delete_merged_branches = true
