@@ -5,7 +5,7 @@ import { wasm_exports } from "../index";
 export const setValue = (value: string) => {
   const textEncoder = new util.TextEncoder();
   const typedArray = textEncoder.encode(value);
-  const ptr = wasm_exports._malloc(typedArray.length);
+  const ptr = wasm_exports._wbindgen_malloc(typedArray.length);
   const Uint8Memory = new Uint8Array(wasm_exports.memory.buffer);
   Uint8Memory.subarray(ptr, ptr + typedArray.length).set(typedArray);
   return {ptr, length: typedArray.length};

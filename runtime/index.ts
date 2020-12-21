@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
-import { _sql_run_callback } from "./sqlite";
+import { _sql_run_callback, _sql_query_callback } from "./sqlite";
 
 type Module = {
   name: string,
@@ -25,6 +25,7 @@ let import_object = {
     _read_file_callback,
     _request_callback,
     _sql_run_callback,
+    _sql_query_callback,
   }
 };
 
