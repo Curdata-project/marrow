@@ -94,3 +94,13 @@ pub fn sql_run(s: &str) -> SqlResult {
 
     result
 }
+
+#[no_mangle]
+pub extern "C" fn call_sql_callback_fn(
+    ptr: *const u8,
+    size: usize,
+    cb: unsafe extern "C" fn(*mut c_void, *const u8, usize),
+    user_data: *mut c_void,
+) {
+    unsafe { cb(user_data, ptr, size) }
+}
