@@ -1,17 +1,17 @@
 //! execute sql
 
-use core::ffi::c_void;
-use core::cell::RefCell;
 use alloc::rc::Rc;
-use core::task::{Waker, Context, Poll};
+use core::cell::RefCell;
+use core::ffi::c_void;
 use core::future::Future;
-use core::pin::Pin;
 use core::option::Option::Some;
+use core::pin::Pin;
+use core::task::{Context, Poll, Waker};
 
 ///
 unsafe extern "C" fn hook<F>(user_data: *mut c_void, ptr: *const u8, size: usize)
-    where
-        F: FnMut(*const u8, usize),
+where
+    F: FnMut(*const u8, usize),
 {
     //这里将闭包的数据指针强转为函数指针，并传入参数
     (*(user_data as *mut F))(ptr, size)
@@ -20,7 +20,7 @@ unsafe extern "C" fn hook<F>(user_data: *mut c_void, ptr: *const u8, size: usize
 /// 封装调用的js接口
 pub fn sql_run_callback<F>(s: &str, mut f: F)
 where
-    F:FnMut(*const u8, usize),
+    F: FnMut(*const u8, usize),
 {
     // 外部C-ABI接口
     #[link(wasm_import_module = "wstd")]
@@ -39,9 +39,10 @@ where
     let bytes = s.as_bytes();
 
     // 调用提供的C-ABI接口
-    unsafe { _sql_run_callback(bytes.as_ptr(), bytes.len(),hook::<F>, user_data); };
+    unsafe {
+        _sql_run_callback(bytes.as_ptr(), bytes.len(), hook::<F>, user_data);
+    };
 }
-
 
 #[derive(Debug, Clone)]
 pub struct SqlResult {
@@ -56,21 +57,21 @@ struct Inner {
 }
 
 impl SqlResult {
-    pub fn default()->Self{
-        SqlResult{
-            inner: Rc::new(RefCell::new(Default::default()))
+    pub fn default() -> Self {
+        SqlResult {
+            inner: Rc::new(RefCell::new(Default::default())),
         }
     }
 }
 
-impl Future for SqlResult{
-    type Output = u8;
+impl Future for SqlResult {
+    type Output = (*const u8, usize);
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.borrow_mut();
 
-        if  inner.ptr.is_some() && inner.size.is_some() {
-            return Poll::Ready(0);
+        if inner.ptr.is_some() && inner.size.is_some() {
+            return Poll::Ready((inner.ptr.unwrap(), inner.size.unwrap()));
         }
 
         inner.task = Some(cx.waker().clone());
@@ -78,12 +79,10 @@ impl Future for SqlResult{
     }
 }
 
-pub fn sql_run(s: &str) -> SqlResult{
-
+pub fn sql_run(s: &str) -> SqlResult {
     let result = SqlResult::default();
     let mut inner = result.inner.borrow_mut();
-    sql_run_callback(s, move|ptr: *const u8, size: usize|{
-
+    sql_run_callback(s, move |ptr: *const u8, size: usize| {
         inner.ptr = Some(ptr);
         inner.size = Some(size);
 

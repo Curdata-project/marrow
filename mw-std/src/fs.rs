@@ -1,10 +1,10 @@
+use alloc::rc::Rc;
 use core::cell::RefCell;
 use core::ffi::c_void;
 use core::future::Future;
 use core::option::Option::Some;
 use core::pin::Pin;
 use core::task::{Context, Poll, Waker};
-use alloc::rc::Rc;
 
 unsafe extern "C" fn hook<F>(user_data: *mut c_void, result: u8)
 where
@@ -20,10 +20,10 @@ where
     #[link(wasm_import_module = "wstd")]
     extern "C" {
         fn _read_file_callback(
-            cb: unsafe extern "C" fn(*mut c_void, u8),
-            user_data: *mut c_void,
             path: *const u8,
             path_len: usize,
+            cb: unsafe extern "C" fn(*mut c_void, u8),
+            user_data: *mut c_void,
         ) -> usize;
     }
 
@@ -31,7 +31,7 @@ where
 
     let bytes = s.as_bytes();
 
-    unsafe { _read_file_callback(hook::<F>, user_data, bytes.as_ptr(), bytes.len()) }
+    unsafe { _read_file_callback(bytes.as_ptr(), bytes.len(), hook::<F>, user_data) }
 }
 
 #[derive(Debug, Clone)]
