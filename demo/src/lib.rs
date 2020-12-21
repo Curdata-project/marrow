@@ -18,11 +18,30 @@ async fn main() {
 }
 
 #[no_mangle]
-pub extern "C" fn sql() {
+pub extern "C" fn sql(ty: u8) {
     let runtime = mw_rt::runtime::Runtime::new();
 
     runtime.spawn(async move {
-        let result = sql::sql_run("select * from test_db").await;
+        // let result = sql::sql_run("select * from test_db").await;
+
+        let create_str = r#"
+        CREATE TABLE "test_db" (
+            "account" VARCHAR(255) NOT NULL,
+            "secret_type" VARCHAR(255) NOT NULL,
+            PRIMARY KEY ("account")
+          )
+        "#;
+
+        let op = match ty {
+            0 => Some(sql::sql_execute(create_str, ty).await),
+            1 => Some(sql::sql_execute("select * from test_db", ty).await),
+            _ => None,
+        };
+        if op.is_none() {
+            debug::println("type parsing failed");
+            return;
+        }
+        let result = op.unwrap();
         let s = unsafe { alloc::slice::from_raw_parts(result.0, result.1) };
         let str = string::String::from_utf8(s.to_vec()).unwrap();
         debug::println(&alloc::format!("{:?}", result));
