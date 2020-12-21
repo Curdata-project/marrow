@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as util from "util";
 import { wasm_exports } from "../index";
 
-export const _read_file_callback = (fn: any, addr: any, ptr: number, path_length: number) => {
+export const _read_file_callback = (ptr: number, path_length: number, fn: any, addr: any) => {
   const value = wasm_exports.memory.buffer.slice(ptr, ptr + path_length);
   let utf8decoder = new util.TextDecoder();
   const path = utf8decoder.decode(value);

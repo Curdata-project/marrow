@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
-import { _sqlite_run_callback } from "./sqlite";
+import { _sql_run_callback } from "./sqlite";
 
 type Module = {
   name: string,
@@ -24,7 +24,7 @@ let import_object = {
     print,
     _read_file_callback,
     _request_callback,
-    _sqlite_run_callback,
+    _sql_run_callback,
   }
 };
 
@@ -34,7 +34,8 @@ export const run = async (modules: Module[]) => {
     // @ts-ignore
     const { instance, module } = await WebAssembly.instantiate(wasm, import_object);
     wasm_exports = instance.exports;
-    wasm_exports._entry();
+    wasm_exports._sql(0);
+    wasm_exports._sql(1);
   }
 };
 
