@@ -91,9 +91,9 @@ pub fn read_file(s: &str) -> ReadFile {
 
 #[no_mangle]
 pub extern "C" fn call_read_file_callback_fn(
+    result: u8,
     cb: unsafe extern "C" fn(*mut c_void, u8),
     user_data: *mut c_void,
-    result: u8,
 ) {
     unsafe { cb(user_data, result) }
 }
