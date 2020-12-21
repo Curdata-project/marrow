@@ -3,6 +3,7 @@ import * as util from "util";
 import { wasm_exports } from "../index";
 
 export const setValue = (value: string) => {
+  console.log(value)
   const textEncoder = new util.TextEncoder();
   const typedArray = textEncoder.encode(value);
   const ptr = wasm_exports._wbindgen_malloc(typedArray.length);
