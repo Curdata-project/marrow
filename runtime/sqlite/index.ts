@@ -30,7 +30,7 @@ export const _sql_query_callback = (ptr: number, path_length: number, fn: any, a
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
     } else {
       console.log(data, "query data")
-      const { ptr, length } = setValue(data);
+      const { ptr, length } = setValue(data.toString());
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
     }
   })
