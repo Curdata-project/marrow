@@ -92,13 +92,16 @@ impl SqlResult {
 }
 
 impl Future for SqlResult {
-    type Output = (*const u8, usize);
+    type Output = alloc::vec::Vec<u8>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.borrow_mut();
 
         if inner.ptr.is_some() && inner.size.is_some() {
-            return Poll::Ready((inner.ptr.unwrap(), inner.size.unwrap()));
+            let v = unsafe {
+                alloc::slice::from_raw_parts(inner.ptr.unwrap(), inner.size.unwrap()).to_vec()
+            };
+            return Poll::Ready(v);
         }
 
         inner.task = Some(cx.waker().clone());

@@ -44,9 +44,7 @@ pub extern "C" fn _sql(ty: u8) {
             return;
         }
         let result = op.unwrap();
-        let s = unsafe { alloc::slice::from_raw_parts(result.0, result.1) };
-        let str = string::String::from_utf8(s.to_vec()).unwrap();
-        debug::println(&alloc::format!("{:?}", result));
+        let str = string::String::from_utf8(result).unwrap();
         debug::println(str.as_str());
     });
 }
