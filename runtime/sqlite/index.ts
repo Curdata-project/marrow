@@ -10,7 +10,7 @@ export const _sql_run_callback = (ptr: number, path_length: number, fn: any, add
   console.log(sql, "sql");
   db.run(sql, (err) => {
     if (err) {
-      console.log(err);
+      console.log(err, "run err");
       const { ptr, length } = setValue("fail");
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
     } else {
@@ -25,10 +25,12 @@ export const _sql_query_callback = (ptr: number, path_length: number, fn: any, a
   console.log(sql, "sql");
   db.all(sql, (err, data) => {
     if (err) {
+      console.log(err, "query err")
       const { ptr, length } = setValue("fail");
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
     } else {
-      const { ptr, length } = setValue(data.toString());
+      console.log(data, "query data")
+      const { ptr, length } = setValue(data);
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
     }
   })
