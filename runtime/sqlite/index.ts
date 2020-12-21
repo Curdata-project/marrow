@@ -5,7 +5,7 @@ import { getValue, setValue } from "../utils";
 
 const db = new sqlite.Database("test.db");
 
-export const _sqlite_callback = (fn: any, addr: any, ptr: number, path_length: number) => {
+export const _sqlite_run_callback = (ptr: number, path_length: number, fn: any, addr: any) => {
   const sql = getValue(ptr, path_length);
   db.all(sql, (err, data) => {
     if (err) {
