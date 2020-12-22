@@ -10,13 +10,6 @@ type Module = {
   path: string,
 };
 
-const modules = [
-  {
-    name: "demo",
-    path: "../target/wasm32-unknown-unknown/release/demo.wasm"
-  }
-];
-
 export let wasm_exports: any;
 
 const import_object = {
@@ -40,4 +33,4 @@ export const run = async (modules: Module[]) => {
   }
 };
 
-run(modules);
+// run(modules);

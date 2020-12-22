@@ -5,6 +5,9 @@ members = [
     'mw-std',
     'demo'
 ]
+exclude = [
+    'examples'
+]
 
 [profile.release]
 lto = true

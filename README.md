@@ -12,9 +12,9 @@ To use it:
 
 1. Make sure your machine has the latest version of nodeJS and npm installed.
 
-2. Add the compiled wasm module information to the modules array in the `/runtime/index.ts` file.
+2. Add the compiled wasm module information to the modules array in the `runtime/index.ts` file.
 
-3. Run the following command in the `/runtime` directory:
+3. Run the following command in the `runtime` directory:
 
 ```sh
 npm run dev
