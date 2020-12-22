@@ -11,9 +11,11 @@ export const _sql_run_callback = (ptr: number, path_length: number, fn: number, 
     if (err) {
       const { ptr, length } = setValue("fail");
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+      wasm_exports._wasm_free(ptr, length);
     } else {
       const { ptr, length } = setValue("ok");
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+      wasm_exports._wasm_free(ptr, length);
     }
   });
 };
@@ -24,9 +26,11 @@ export const _sql_query_callback = (ptr: number, path_length: number, fn: number
     if (err) {
       const { ptr, length } = setValue("fail");
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+      wasm_exports._wasm_free(ptr, length);
     } else {
       const { ptr, length } = setValue(JSON.stringify(data));
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+      wasm_exports._wasm_free(ptr, length);
     }
   });
 };
