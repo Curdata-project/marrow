@@ -6,6 +6,11 @@
 
 ## Usage
 
+```sh
+make build # Build examples's file.
+make test # Do test
+```
+
 runtime is a TypeScript module to provide wasm runtime and schedule wasm module to run.
 
 To use it:
