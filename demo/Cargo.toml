@@ -9,10 +9,6 @@ edition = "2018"
 [lib]
 crate-type = ["cdylib"]
 
-[profile.release]
-lto = true
-opt-level = "s"
-
 [dependencies]
 mw-rt = {path = "../mw-rt"}
 mw-std = {path = "../mw-std"}

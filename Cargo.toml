@@ -5,3 +5,7 @@ members = [
     'mw-std',
     'demo'
 ]
+
+[profile.release]
+lto = true
+opt-level = "s"
