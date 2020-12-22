@@ -6,6 +6,20 @@
 
 ## Usage
 
+runtime is a TypeScript module to provide wasm runtime and schedule wasm module to run.
+
+To use it:
+
+1. Make sure your machine has the latest version of nodeJS and npm installed.
+
+2. Add the compiled wasm module information to the modules array in the `/runtime/index.ts` file.
+
+3. Run the following command in the `/runtime` directory:
+
+```sh
+npm run dev
+```
+
 ## Design
 
 `Marrow` can load multiple `Webassembly` modules, these modules call each other through `CABI`. `Marrow` provides standard libraries in multiple languages, that can access resource for physical node.

@@ -1,3 +1,8 @@
 **/target
 **/Cargo.lock
 node_modules/
+
+# Sqlite3 db
+runtime/*.db
+
+dist/
