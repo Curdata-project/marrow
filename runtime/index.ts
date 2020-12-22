@@ -17,9 +17,9 @@ const modules = [
   }
 ];
 
-export let wasm_exports: any = null;
+export let wasm_exports: any;
 
-let import_object = {
+const import_object = {
   wstd: {
     print,
     _read_file_callback,

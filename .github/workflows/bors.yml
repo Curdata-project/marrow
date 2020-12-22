@@ -26,6 +26,10 @@ jobs:
         with:
           use-cross: true
           command: doc
+      - run: |
+          cd runtime
+      - run: |
+          npm run build
       # - uses: saltbo/uptoc@master
       #   with:
       #     driver: oss

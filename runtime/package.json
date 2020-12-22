@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "dev": "NODE_ENV=development nodemon index.ts"
+    "dev": "NODE_ENV=development nodemon index.ts",
+    "build": "npm run lint && node_modules/typescript/bin/tsc",
+    "lint": "node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json --force",
+    "lint:fix": "node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json --fix --force"
   },
   "keywords": [],
   "author": "",
