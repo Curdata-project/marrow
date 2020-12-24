@@ -1,7 +1,7 @@
 .PHONY: build
 
 build:
-	cd runtime && npm run build
+	cd runtime &&npm install && npm run build
 	$(MAKE) -C examples/demo build
 
 .PHONY: clean
