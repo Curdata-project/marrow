@@ -4,5 +4,6 @@ extern crate alloc;
 
 pub mod debug;
 pub mod fs;
-pub mod sql;
 pub mod memory;
+pub mod notify;
+pub mod sql;
