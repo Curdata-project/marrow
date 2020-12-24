@@ -2,8 +2,7 @@
 members = [
     'mw-macros',
     'mw-rt',
-    'mw-std',
-    'demo'
+    'mw-std'
 ]
 exclude = [
     'examples'
