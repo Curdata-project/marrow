@@ -17,22 +17,8 @@ jobs:
           toolchain: nightly
           target: wasm32-unknown-unknown
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --target wasm32-unknown-unknown
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: doc
       - uses: actions/setup-node@v2
         with: 
           node-version: '15'
       - run: make build
       - run: make test
-      # - uses: saltbo/uptoc@master
-      #   with:
-      #     driver: oss
-      #     region: cn-shenzhen
-      #     bucket: curdata-rustdoc
-      #     dist: target/doc/marrow
