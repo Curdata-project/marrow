@@ -10,6 +10,6 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-mw-rt = {path = "../mw-rt"}
-mw-std = {path = "../mw-std"}
+mw-rt = {path = "../../mw-rt"}
+mw-std = {path = "../../mw-std"}
 wee_alloc = "0.4.5"

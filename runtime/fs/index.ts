@@ -8,8 +8,8 @@ export const _read_file_callback = (ptr: number, path_length: number, fn: number
   const path = utf8decoder.decode(value);
 
   fs.readFile(path, (err, data) => {
-    console.log(fn, addr);
-    wasm_exports.call_read_file_callback_fn(fn, addr, 1);
+    // console.log(fn, addr);
+    wasm_exports.call_read_file_callback_fn(1, fn, addr);
   });
   return 0;
 };

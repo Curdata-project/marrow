@@ -10,13 +10,6 @@ type Module = {
   path: string,
 };
 
-const modules = [
-  {
-    name: "demo",
-    path: "../target/wasm32-unknown-unknown/release/demo.wasm"
-  }
-];
-
 export let wasm_exports: any;
 
 const import_object = {
@@ -35,9 +28,9 @@ export const run = async (modules: Module[]) => {
     // @ts-ignore
     const { instance, module } = await WebAssembly.instantiate(wasm, import_object);
     wasm_exports = instance.exports;
-    wasm_exports._sql(0);
-    wasm_exports._sql(1);
+    console.log(wasm_exports);
+    wasm_exports._entry();
   }
 };
 
-run(modules);
+// run(modules);
