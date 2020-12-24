@@ -1,8 +1,8 @@
 {
-  "name": "tools",
+  "name": "runtime",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "NODE_ENV=development nodemon index.ts",
     "build": "npm run lint && node_modules/typescript/bin/tsc",
@@ -15,8 +15,11 @@
   "dependencies": {
     "@types/node": "^13.5.2",
     "@types/sqlite3": "^3.1.6",
+    "@types/websocket": "^1.0.1",
     "axios": "^0.21.0",
-    "sqlite3": "^5.0.0"
+    "protobufjs": "^6.10.2",
+    "sqlite3": "^5.0.0",
+    "websocket": "^1.0.33"
   },
   "devDependencies": {
     "nodemon": "2.0.4",
