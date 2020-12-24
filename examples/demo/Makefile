@@ -6,7 +6,7 @@ build_npm:
 	$(NPM) build
 
 build_cargo:
-	$(CARGO) build --target wasm32-unknown-unknown
+	$(CARGO) build --target wasm32-unknown-unknown --release
 
 build: build_npm build_cargo
 
