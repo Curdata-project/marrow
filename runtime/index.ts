@@ -28,8 +28,7 @@ export const run = async (modules: Module[]) => {
     // @ts-ignore
     const { instance, module } = await WebAssembly.instantiate(wasm, import_object);
     wasm_exports = instance.exports;
-    wasm_exports._sql(0);
-    wasm_exports._sql(1);
+    wasm_exports._entry();
   }
 };
 
