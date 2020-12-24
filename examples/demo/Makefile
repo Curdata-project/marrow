@@ -1,7 +1,6 @@
 CARGO = cargo
 NPM = npm
 
-
 build_npm:
 	$(NPM) install
 	$(NPM) build

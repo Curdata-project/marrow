@@ -7,6 +7,7 @@ build:
 .PHONY: clean
 
 clean:
+	cargo clean && rm -f Cargo.lock
 	$(MAKE) -C examples/demo clean
 
 .PHONY: test
