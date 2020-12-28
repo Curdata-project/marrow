@@ -1,4 +1,5 @@
 import * as util from "util";
+import * as crypto from "crypto";
 
 import { wasm_exports } from "../index";
 
@@ -23,4 +24,15 @@ export const setValueByBytes = (bytes: any) => {
   const Uint8Memory = new Uint8Array(wasm_exports.memory.buffer);
   Uint8Memory.subarray(ptr, ptr + typedArray.length).set(typedArray);
   return {ptr, length: typedArray.length};
+};
+
+export const _get_timestamp = () => {
+  return Date.now();
+};
+
+export const _gen_rand32_callback = (fn: number, addr: number) => {
+  const buffer = crypto.randomBytes(32);
+  const { ptr, length } = setValueByBytes(buffer);
+  wasm_exports.call_gen_rand32_callback_fn(ptr, length, fn, addr);
+  wasm_exports._wasm_free(ptr, length);
 };

@@ -34,3 +34,14 @@ export const _sql_query_callback = (ptr: number, path_length: number, fn: number
     }
   });
 };
+
+export const _sql_table_exist = (ptr: number, size: number) => {
+  const tableName = getValue(ptr, size);
+  db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name=${tableName}`, (error, row) => {
+    if (row !== undefined) {
+      return 0;
+    } else {
+      return 1;
+    }
+  });
+};

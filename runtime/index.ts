@@ -3,8 +3,9 @@ import * as fs from "fs";
 import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
-import { _sql_run_callback, _sql_query_callback } from "./sqlite";
+import { _sql_run_callback, _sql_query_callback, _sql_table_exist } from "./sqlite";
 import { _callback_number, _callback_ptr_size } from "./notify";
+import { _get_timestamp, _gen_rand32_callback } from "./utils";
 
 import { startServer } from "./rpc/server";
 
@@ -19,6 +20,9 @@ const import_object = {
     _sql_query_callback,
     _callback_number,
     _callback_ptr_size,
+    _get_timestamp,
+    _sql_table_exist,
+    _gen_rand32_callback,
   }
 };
 
