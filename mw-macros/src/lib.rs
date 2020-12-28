@@ -35,3 +35,10 @@ pub fn main(_arg: TokenStream, input: TokenStream) -> TokenStream {
     };
     TokenStream::from(expanded)
 }
+
+mod actor;
+
+#[proc_macro_attribute]
+pub fn actor_attr(_arg: TokenStream, input: TokenStream) -> TokenStream {
+    actor::actor(_arg, input)
+}
