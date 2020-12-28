@@ -17,6 +17,10 @@ type Expose = {
 type Arg = {
   name: string;
   type: string;
+  attr?: {
+    proto: string;
+    message: string;
+  }
 };
 
 type Return = {
@@ -27,5 +31,22 @@ type Return = {
 
 type CacheModule = {
   index: number;
-  targetMethod: Expose;
-}
+  module: any;
+  name: string;
+};
+
+type Request = {
+  jsonrpc: string;
+  module: string;
+  name: string;
+  index: number;
+  args: any[];
+  type: string;
+};
+
+type Response = {
+  jsonrpc: string;
+  index: number;
+  code: number;
+  result: any;
+};

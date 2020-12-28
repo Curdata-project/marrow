@@ -22,12 +22,13 @@ const import_object = {
   }
 };
 
-const fireModule = async (path: string) => {
+export const initModule = async (path: string) => {
   const wasm = fs.readFileSync(path);
   // @ts-ignore
   const { instance, module } = await WebAssembly.instantiate(wasm, import_object);
   wasm_exports = instance.exports;
   wasm_exports._entry();
+  return instance;
 };
 
 export const run = async (modules: Module[]) => {

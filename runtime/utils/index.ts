@@ -16,3 +16,11 @@ export const getValue = (ptr: number, length: number) => {
   const utf8decoder = new util.TextDecoder();
   return utf8decoder.decode(value);
 };
+
+export const setValueByBytes = (bytes: any) => {
+  const typedArray = new Uint8Array(bytes);
+  const ptr = wasm_exports._wasm_malloc(typedArray.length);
+  const Uint8Memory = new Uint8Array(wasm_exports.memory.buffer);
+  Uint8Memory.subarray(ptr, ptr + typedArray.length).set(typedArray);
+  return {ptr, length: typedArray.length};
+};
