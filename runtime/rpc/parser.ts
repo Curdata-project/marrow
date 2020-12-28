@@ -34,6 +34,7 @@ export const parser = async (modules: any) => {
 
     // init wasm module
     instance.exports._entry();
+    console.log("entry");
 
     const methodsList = curModule.expose;
     for (let j = 0; j < methodsList.length; j++) {
