@@ -134,6 +134,16 @@ pub fn sql_execute(s: &str, ty: u8) -> SqlResult {
     result.clone()
 }
 
+/// judgment table exists or not
+pub fn sql_table_exist(s: &str) -> i32 {
+    #[link(wasm_import_module = "wstd")]
+    extern "C" {
+        fn _sql_table_exist(ptr: *const u8, size: usize) -> i32;
+    }
+
+    unsafe { _sql_table_exist(s.as_ptr(), s.len()) }
+}
+
 #[no_mangle]
 pub extern "C" fn call_sql_callback_fn(
     ptr: *const u8,
