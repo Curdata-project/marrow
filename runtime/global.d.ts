@@ -31,8 +31,7 @@ type Return = {
 
 type CacheModule = {
   index: number;
-  module: any;
-  name: string;
+  proto: any;
 };
 
 type Request = {

@@ -3,9 +3,11 @@ import { moduleCache } from "../rpc/hander";
 import { getValue } from "../utils";
 
 export const _callback_ptr_size = (dex: number, ptr: number, size: number) => {
+  console.log(dex, ptr, size);
   const value = getValue(ptr, size);
-  const curModule = moduleCache.find(item => item.index === dex);
-  const valueDecoded = curModule.module.return.decode(value);
+  console.log(value);
+  const proto = moduleCache.find(item => item.index === dex).proto;
+  const valueDecoded = proto.value.decode(value);
   const response: Response = {
     jsonrpc: "2.0",
     result: valueDecoded,

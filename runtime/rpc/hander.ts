@@ -14,7 +14,7 @@ export const hander = (message: IMessage, modules: any) => {
       index,
     };
   }
-  console.log("当前的 module cache", moduleCache);
+
   if (moduleCache.length !== 0 && moduleCache.map(item => item.index).includes(index)) {
     return {
       code: 32603,
@@ -41,25 +41,24 @@ export const hander = (message: IMessage, modules: any) => {
   }
 
   moduleCache.push({
+    proto: method.return,
     index,
-    module,
-    name,
   });
 
-  // Todo: 调用对应的模块方法
+  console.log("当前的 module cache", moduleCache);
   // Todo: 区别 callback
 
   if (method.args.length === 0) {
-    modules[module].instance.exports[name]();
+    modules[module].instance.exports[name](index);
   }
 
   if (method.args[0].type === "number") {
-    modules[module].instance.exports[name](...args);
+    modules[module].instance.exports[name](index, ...args);
   }
 
   if (method.args[0].type === "bytes") {
     const { ptr, length } = setValueByBytes(args);
-    modules[module].instance.exports[name](ptr, length);
+    modules[module].instance.exports[name](index, ptr, length);
   }
 
   if (method.args[0].type === "proto") {
@@ -75,7 +74,7 @@ export const hander = (message: IMessage, modules: any) => {
 
     const buffer = message.encode(args).finish();
     const { ptr, length } = setValueByBytes(buffer);
-    modules[module].instance.exports[name](ptr, length);
+    modules[module].instance.exports[name](index, ptr, length);
   }
 
 };
