@@ -4,8 +4,8 @@
 extern crate alloc;
 
 // use mw_std::debug;
-use core::cell::RefCell;
 use alloc::boxed::Box;
+use core::cell::RefCell;
 use mw_rt::actor::Actor;
 
 #[global_allocator]
@@ -20,11 +20,10 @@ impl Actor for MyActor {
         MyActor {}
     }
 
-    async fn init(&mut self) {
-
-    }
+    async fn init(&mut self) {}
 }
 
+#[mw_rt::actor::expose]
 impl MyActor {
     pub fn return_int(&mut self) -> usize {
         1
@@ -34,7 +33,7 @@ impl MyActor {
         &[0u8; 10]
     }
 
-    pub async fn async_return_int(&mut self) -> usize {
-        1
+    pub async fn async_return_bytes(&mut self) -> &[u8] {
+        &[0u8; 10]
     }
 }

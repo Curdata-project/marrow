@@ -14,3 +14,4 @@ pub trait IntoInner {
 }
 
 pub use mw_macros::actor_attr as actor;
+pub use mw_macros::expose;
