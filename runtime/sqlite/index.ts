@@ -35,16 +35,16 @@ export const _sql_query_callback = (ptr: number, path_length: number, fn: number
   });
 };
 
-export const _sql_table_exist = (ptr: number, size: number) => {
+export const _sql_operate_callback = (ptr: number, size: number, fn: number, addr: number) => {
   const tableName = getValue(ptr, size);
   db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}'`, (error, row) => {
     if (error) {
       console.log(error);
     }
     if (row === undefined) {
-      
+      wasm_exports.call_sql_operate_callback_fn(1, fn, addr);
     } else {
-      
+      wasm_exports.call_sql_operate_callback_fn(0, fn, addr);
     }
   });
 };
