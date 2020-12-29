@@ -1,6 +1,8 @@
 import { IMessage } from "websocket";
 import { setValueByBytes } from "../utils";
 
+import { wasm_exports } from "../index";
+
 export let moduleCache: CacheModule[] = [];
 
 export const hander = (message: IMessage, modules: any) => {
@@ -59,6 +61,7 @@ export const hander = (message: IMessage, modules: any) => {
   if (method.args[0].type === "bytes") {
     const { ptr, length } = setValueByBytes(args);
     modules[module].instance.exports[name](index, ptr, length);
+    wasm_exports._wasm_free(ptr, length);
   }
 
   if (method.args[0].type === "proto") {
@@ -75,6 +78,7 @@ export const hander = (message: IMessage, modules: any) => {
     const buffer = message.encode(args).finish();
     const { ptr, length } = setValueByBytes(buffer);
     modules[module].instance.exports[name](index, ptr, length);
+    wasm_exports._wasm_free(ptr, length);
   }
 
 };
