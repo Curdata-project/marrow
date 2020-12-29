@@ -14,3 +14,4 @@ pub mod task;
 mod panic;
 
 pub mod actor;
+pub mod rpc;

@@ -12,3 +12,5 @@ pub trait IntoInner {
 
     fn into_inner() -> Self::Inner;
 }
+
+pub use mw_macros::actor_attr as actor;

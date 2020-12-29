@@ -11,14 +11,8 @@ use mw_rt::actor::Actor;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-struct MyActor {}
-
-struct MyActorWrapper {
-    actor: RefCell<MyActor>,
-    lastest_bytes_length: RefCell<usize>,
-}
-
-unsafe impl Sync for MyActorWrapper {}
+#[mw_rt::actor::actor]
+pub struct MyActor {}
 
 #[async_trait::async_trait]
 impl Actor for MyActor {
@@ -40,45 +34,7 @@ impl MyActor {
         &[0u8; 10]
     }
 
-    // pub async fn async_return_int(&mut self) -> usize {
-    //     1
-    // }
-
-    // pub async fn async_return_bytes(&mut self) -> &[u8] {
-    //     &[0u8; 10]
-    // }
-}
-
-#[no_mangle]
-pub extern "C" fn rpc_actor_return_int() -> usize {
-    ACTOR.actor.borrow_mut().return_int()
-}
-
-
-#[no_mangle]
-pub extern "C" fn rpc_actor_return_bytes() -> *const u8 {
-    let mut actor = ACTOR.actor.borrow_mut();
-    let bytes = actor.return_bytes();
-    *ACTOR.lastest_bytes_length.borrow_mut() = bytes.len();
-    bytes.as_ptr()
-}
-
-
-#[macro_use]
-extern crate lazy_static;
-lazy_static! {
-    static ref ACTOR: MyActorWrapper = MyActorWrapper {
-        actor: RefCell::new(MyActor::new()),
-        lastest_bytes_length: RefCell::new(0),
-    };
-}
-
-#[no_mangle]
-pub extern "C" fn __get_lastest_bytes_length() -> usize {
-    *ACTOR.lastest_bytes_length.borrow()
-}
-
-#[mw_rt::async_main]
-async fn main() {
-    ACTOR.actor.borrow_mut().init().await;
+    pub async fn async_return_int(&mut self) -> usize {
+        1
+    }
 }
