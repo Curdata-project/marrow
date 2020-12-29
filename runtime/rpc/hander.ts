@@ -69,7 +69,7 @@ export const hander = (message: IMessage, modules: any) => {
 
   if (method.args[0].type === "proto") {
     const message = method.args[0].message;
-    const argsError = message.verify(args);
+    const argsError = message.verify(args[0]);
     if (argsError) {
       console.log(argsError, "protobuf verify error");
       return {
@@ -78,9 +78,11 @@ export const hander = (message: IMessage, modules: any) => {
         index,
       };
     }
-
-    const buffer = message.encode(args).finish();
+    const msg = message.create(args[0]);
+    const buffer = message.encode(msg).finish();
+    console.log(buffer, "this is protobuf encode output");
     const { ptr, length } = setValueByBytes(buffer);
+    console.log(`run wasm ${name} function and index=${index} ptr=${ptr} length=${length}`);
     modules[module].instance.exports[name](index, ptr, length);
     wasm_exports._wasm_free(ptr, length);
   }
