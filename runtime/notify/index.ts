@@ -4,13 +4,18 @@ import { getValue } from "../utils";
 
 export const _callback_ptr_size = (dex: number, ptr: number, size: number) => {
   console.log(dex, ptr, size);
-  const value = getValue(ptr, size);
-  console.log(value);
-  const proto = moduleCache.find(item => item.index === dex).proto;
-  const valueDecoded = proto.value.decode(value);
+  let result: any;
+  if (size === 0) {
+    result = "null";
+  } else {
+    const value = getValue(ptr, size);
+    const proto = moduleCache.find(item => item.index === dex).proto;
+    const valueDecoded = proto.value.decode(value);
+    result = valueDecoded;
+  }
   const response: Response = {
     jsonrpc: "2.0",
-    result: valueDecoded,
+    result: result,
     code: 0,
     index: dex,
   };

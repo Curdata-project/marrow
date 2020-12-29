@@ -35,7 +35,6 @@ export const startServer = async (modules: Modules) => {
     socket = connect;
 
     connect.on("message", async (message) => {
-      console.log("receive a new message 📧", message);
 
       const error = hander(message, modulesResolved);
       if (error) {

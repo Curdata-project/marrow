@@ -56,11 +56,11 @@ export const parser = async (modules: any) => {
           const protoRoot = protobuf.loadSync(protoPath);
           const message = protoRoot.lookupType(protoMessage);
 
-          outputModules[item][curMethod.name].args = {
+          outputModules[item][curMethod.name].args = [{
             type: "proto",
             name: curMethod.args[0].name,
             message: message,
-          };
+          }];
         }
       }
 

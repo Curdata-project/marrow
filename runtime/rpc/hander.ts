@@ -7,12 +7,14 @@ export let moduleCache: CacheModule[] = [];
 
 export const hander = (message: IMessage, modules: any) => {
   const data: Request = JSON.parse(message.utf8Data);
+
+  console.log("receive a new message 📧", data);
   const { index, type, module, name, args } = data;
 
   if (!index || !type || !name || !args) {
     return {
       code: 32601,
-      message: "发送的json不是一个有效的请求对象",
+      message: "The sent json is not a valid request object",
       index,
     };
   }
@@ -20,16 +22,17 @@ export const hander = (message: IMessage, modules: any) => {
   if (moduleCache.length !== 0 && moduleCache.map(item => item.index).includes(index)) {
     return {
       code: 32603,
-      message: "请求的 index 已存在",
+      message: "The requested index already exists",
       index,
     };
   }
 
   const method = modules[module][name];
+
   if (!method) {
     return {
       code: 32601,
-      message: "该方法不存在或无效",
+      message: "The method does not exist or is invalid",
       index,
     };
   }
@@ -37,7 +40,7 @@ export const hander = (message: IMessage, modules: any) => {
   if (method.args.length !== args.length) {
     return {
       code: 32602,
-      message: "无效的方法参数",
+      message: `Invalid method parameter, ${method.args.length} defined but ${args.length} received`,
       index,
     };
   }
@@ -68,9 +71,10 @@ export const hander = (message: IMessage, modules: any) => {
     const message = method.args[0].message;
     const argsError = message.verify(args);
     if (argsError) {
+      console.log(argsError, "protobuf verify error");
       return {
         code: 32602,
-        message: "无效的方法参数",
+        message: "protobuf verify error",
         index,
       };
     }
