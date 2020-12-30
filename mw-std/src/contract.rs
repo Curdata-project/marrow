@@ -75,6 +75,29 @@ where
     };
 }
 
+pub fn run_callback<F>(bytes: &[u8], mut f: F)
+where
+    F: FnMut(*const u8, usize),
+{
+    // 外部C-ABI接口
+    #[link(wasm_import_module = "wstd")]
+    extern "C" {
+        fn _run_contract_callback(
+            ptr: *const u8,
+            size: usize,
+            cb: unsafe extern "C" fn(*mut c_void, *const u8, usize),
+            user_data: *mut c_void,
+        );
+    }
+
+    let user_data = &mut f as *mut _ as *mut c_void;
+
+    // 调用提供的C-ABI接口
+    unsafe {
+        _run_contract_callback(bytes.as_ptr(), bytes.len(), hook_ptr_size::<F>, user_data);
+    };
+}
+
 #[derive(Debug, Clone)]
 pub struct NumberResult {
     inner: Rc<RefCell<NumberInner>>,
@@ -165,11 +188,29 @@ pub fn loda(bytes: &[u8]) -> NumberResult {
     result.clone()
 }
 
+/// get list constract
 pub fn list() -> OtherResult {
     let result = OtherResult::default();
     let mut inner = result.inner.borrow_mut();
 
     list_callback(|ptr: *const u8, size: usize| {
+        inner.ptr = Some(ptr);
+        inner.size = Some(size);
+
+        let task_op = inner.task.as_ref();
+        if task_op.is_some() {
+            task_op.unwrap().wake_by_ref();
+        };
+    });
+
+    result.clone()
+}
+
+pub fn run(bytes: &[u8]) -> OtherResult {
+    let result = OtherResult::default();
+    let mut inner = result.inner.borrow_mut();
+
+    run_callback(bytes, |ptr: *const u8, size: usize| {
         inner.ptr = Some(ptr);
         inner.size = Some(size);
 
