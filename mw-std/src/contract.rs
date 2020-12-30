@@ -9,18 +9,18 @@ use core::pin::Pin;
 use core::task::{Context, Poll, Waker};
 
 // sync func
-pub fn do_load(bytes: &[u8]) -> i32 {
+pub fn do_load(bytes: &[u8]) -> u32 {
     #[link(wasm_import_module = "wstd")]
     extern "C" {
-        fn _load_contract(ptr: *const u8, size: usize) -> i32;
+        fn _load_contract(ptr: *const u8, size: usize) -> u32;
     }
 
     unsafe { _load_contract(bytes.as_ptr(), bytes.len()) }
 }
 
-unsafe extern "C" fn hook_number<F>(user_data: *mut c_void, result: i32)
+unsafe extern "C" fn hook_number<F>(user_data: *mut c_void, result: u32)
 where
-    F: FnMut(i32),
+    F: FnMut(u32),
 {
     (*(user_data as *mut F))(result)
 }
@@ -28,14 +28,14 @@ where
 //async func
 pub fn load_callback<F>(bytes: &[u8], mut f: F)
 where
-    F: FnMut(i32),
+    F: FnMut(u32),
 {
     #[link(wasm_import_module = "wstd")]
     extern "C" {
         fn _load_contract_callback(
             ptr: *const u8,
             size: usize,
-            cb: unsafe extern "C" fn(*mut c_void, i32),
+            cb: unsafe extern "C" fn(*mut c_void, u32),
             user_data: *mut c_void,
         );
     }
@@ -54,12 +54,12 @@ pub struct NumberResult {
 
 #[derive(Debug, Clone, Default)]
 struct NumberInner {
-    result: Option<i32>,
+    result: Option<u32>,
     task: Option<Waker>,
 }
 
 impl Future for NumberResult {
-    type Output = i32;
+    type Output = u32;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.borrow_mut();
@@ -86,7 +86,7 @@ pub fn loda(bytes: &[u8]) -> NumberResult {
     let result = NumberResult::default();
     let mut inner = result.inner.borrow_mut();
 
-    load_callback(bytes, |result: i32| {
+    load_callback(bytes, |result: u32| {
         inner.result = Some(result);
 
         let task_op = inner.task.as_ref();
