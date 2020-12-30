@@ -25,6 +25,14 @@ where
     (*(user_data as *mut F))(result)
 }
 
+unsafe extern "C" fn hook_ptr_size<F>(user_data: *mut c_void, ptr: *const u8, size: usize)
+where
+    F: FnMut(*const u8, usize),
+{
+    //这里将闭包的数据指针强转为函数指针，并传入参数
+    (*(user_data as *mut F))(ptr, size)
+}
+
 pub fn load_callback<F>(bytes: &[u8], mut f: F)
 where
     F: FnMut(u32),
@@ -46,6 +54,27 @@ where
     }
 }
 
+pub fn list_callback<F>(mut f: F)
+where
+    F: FnMut(*const u8, usize),
+{
+    // 外部C-ABI接口
+    #[link(wasm_import_module = "wstd")]
+    extern "C" {
+        fn _list_contract_callback(
+            cb: unsafe extern "C" fn(*mut c_void, *const u8, usize),
+            user_data: *mut c_void,
+        );
+    }
+
+    let user_data = &mut f as *mut _ as *mut c_void;
+
+    // 调用提供的C-ABI接口
+    unsafe {
+        _list_contract_callback(hook_ptr_size::<F>, user_data);
+    };
+}
+
 #[derive(Debug, Clone)]
 pub struct NumberResult {
     inner: Rc<RefCell<NumberInner>>,
@@ -54,6 +83,18 @@ pub struct NumberResult {
 #[derive(Debug, Clone, Default)]
 struct NumberInner {
     result: Option<u32>,
+    task: Option<Waker>,
+}
+
+#[derive(Debug, Clone)]
+pub struct OtherResult {
+    inner: Rc<RefCell<OtherInner>>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct OtherInner {
+    ptr: Option<*const u8>,
+    size: Option<usize>,
     task: Option<Waker>,
 }
 
@@ -73,10 +114,36 @@ impl Future for NumberResult {
     }
 }
 
+impl Future for OtherResult {
+    type Output = alloc::vec::Vec<u8>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let mut inner = self.inner.borrow_mut();
+
+        if inner.ptr.is_some() {
+            let v = unsafe {
+                alloc::slice::from_raw_parts(inner.ptr.unwrap(), inner.size.unwrap()).to_vec()
+            };
+            return Poll::Ready(v);
+        }
+
+        inner.task = Some(cx.waker().clone());
+        Poll::Pending
+    }
+}
+
 impl NumberResult {
     fn default() -> Self {
         NumberResult {
             inner: Rc::new(RefCell::new(NumberInner::default())),
+        }
+    }
+}
+
+impl OtherResult {
+    fn default() -> Self {
+        OtherResult {
+            inner: Rc::new(RefCell::new(OtherInner::default())),
         }
     }
 }
@@ -98,6 +165,23 @@ pub fn loda(bytes: &[u8]) -> NumberResult {
     result.clone()
 }
 
+pub fn list() -> OtherResult {
+    let result = OtherResult::default();
+    let mut inner = result.inner.borrow_mut();
+
+    list_callback(|ptr: *const u8, size: usize| {
+        inner.ptr = Some(ptr);
+        inner.size = Some(size);
+
+        let task_op = inner.task.as_ref();
+        if task_op.is_some() {
+            task_op.unwrap().wake_by_ref();
+        };
+    });
+
+    result.clone()
+}
+
 /// sync get contract
 pub fn get_by_id(id: i32) -> i32 {
     #[link(wasm_import_module = "wstd")]
@@ -106,4 +190,23 @@ pub fn get_by_id(id: i32) -> i32 {
     }
 
     unsafe { _get_contract_by_id(id) }
+}
+
+#[no_mangle]
+pub extern "C" fn call_number_callback_fn(
+    result: i32,
+    cb: unsafe extern "C" fn(*mut c_void, i32),
+    user_data: *mut c_void,
+) {
+    unsafe { cb(user_data, result) }
+}
+
+#[no_mangle]
+pub extern "C" fn call_other_callback_fn(
+    ptr: *const u8,
+    size: usize,
+    cb: unsafe extern "C" fn(*mut c_void, *const u8, usize),
+    user_data: *mut c_void,
+) {
+    unsafe { cb(user_data, ptr, size) }
 }
