@@ -25,7 +25,6 @@ where
     (*(user_data as *mut F))(result)
 }
 
-//async func
 pub fn load_callback<F>(bytes: &[u8], mut f: F)
 where
     F: FnMut(u32),
@@ -82,6 +81,7 @@ impl NumberResult {
     }
 }
 
+// async func
 pub fn loda(bytes: &[u8]) -> NumberResult {
     let result = NumberResult::default();
     let mut inner = result.inner.borrow_mut();
@@ -96,4 +96,14 @@ pub fn loda(bytes: &[u8]) -> NumberResult {
     });
 
     result.clone()
+}
+
+/// sync get contract
+pub fn get_by_id(id: i32) -> i32 {
+    #[link(wasm_import_module = "wstd")]
+    extern "C" {
+        fn _get_contract_by_id(id: i32) -> i32;
+    }
+
+    unsafe { _get_contract_by_id(id) }
 }
