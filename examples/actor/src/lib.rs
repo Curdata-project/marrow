@@ -23,7 +23,7 @@ impl Actor for MyActor {
     async fn init(&mut self) {}
 }
 
-#[mw_rt::actor::expose]
+#[mw_rt::actor::expose(name="my_actor")]
 impl MyActor {
     pub fn return_int(&mut self) -> usize {
         1
@@ -33,7 +33,7 @@ impl MyActor {
         &[0u8; 10]
     }
 
-    pub async fn async_return_bytes(&mut self, t: u8, bytes1: &[u8], bytes2: &[u8]) -> &[u8] {
-        &[0u8; 10]
+    pub async fn async_return_bytes(&mut self, t: u8, bytes1: &[u8], bytes2: &[u8]) -> u8 {
+        1
     }
 }

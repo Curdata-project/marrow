@@ -3,14 +3,14 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::*;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::Hash;
-use std::hash::Hasher;
+use convert_case::{Case, Casing};
 use syn::parse_quote;
+use crate::generator::{Method, MethodType, ValueType, Ret, Args};
 use syn::{
     parse_macro_input, punctuated::Punctuated, Expr, FnArg, Ident, ImplItem, ImplItemMethod,
     ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt
 };
+use std::fs;
 
 /// Declare an main
 pub fn actor(_arg: TokenStream, input: TokenStream) -> TokenStream {
@@ -69,23 +69,50 @@ fn is_bytes_type_for_type(ty: &Type) -> bool {
     false
 }
 
-fn is_plain_type_for_type(ty: &Type) -> bool {
+fn is_plain_type_for_type(ty: &Type) -> (bool, &str) {
     if let Type::Path(path) = &*ty {
         if path.path.get_ident().unwrap().to_string() == "u8" {
-            return true;
+            return (true, "u8");
+        }
+        if path.path.get_ident().unwrap().to_string() == "u16" {
+            return (true, "u16");
+        }
+        if path.path.get_ident().unwrap().to_string() == "u32" {
+            return (true, "u32");
+        }
+        if path.path.get_ident().unwrap().to_string() == "u64" {
+            return (true, "u64");
+        }
+        if path.path.get_ident().unwrap().to_string() == "i8" {
+            return (true, "i8");
+        }
+        if path.path.get_ident().unwrap().to_string() == "i16" {
+            return (true, "i16");
+        }
+        if path.path.get_ident().unwrap().to_string() == "i32" {
+            return (true, "i32");
+        }
+        if path.path.get_ident().unwrap().to_string() == "i64" {
+            return (true, "i64");
+        }
+        if path.path.get_ident().unwrap().to_string() == "usize" {
+            return (true, "usize");
+        }
+        if path.path.get_ident().unwrap().to_string() == "isize" {
+            return (true, "isize");
         }
     }
-    false
+    (false, "")
 }
 
-fn get_arg_name(ty: &PatType) -> Option<(Ident, Span)> {
+fn get_arg_name(ty: &PatType) -> Option<Ident> {
     if let Pat::Ident(ident) = &*ty.pat {
-        return Some((ident.ident.clone(), ident.ident.span()));
+        return Some(ident.ident.clone());
     }
     None
 }
 
-fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
+fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
     let func_name = String::from("rpc_") + &name + "_" + &method.sig.ident.to_string();
     let func_name_ident = Ident::new(&func_name, Span::call_site());
     let origin_func_name = method.sig.ident;
@@ -94,16 +121,25 @@ fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
     let mut call_args = Punctuated::<Expr, Token![,]>::new();
     let mut stmt_vec = Vec::new();
     new_args.clear();
+
+    let mut method_json = Method {
+        name: func_name,
+        ty: MethodType::Async,
+        arguments: Vec::new(),
+        ret: Ret {
+            ty: ValueType::Null,
+        }
+    };
+
     for input in method.sig.inputs.iter() {
         // ignore self.
         if let FnArg::Receiver(_) = input {}
         if let FnArg::Typed(t) = input {
             if is_bytes_type_for_type(&*t.ty) {
                 // push two args;
-                let name = get_arg_name(&*t).unwrap().0;
-                let span = get_arg_name(&*t).unwrap().1;
-                let ptr_name_ident = Ident::new(&(name.to_string() + "_ptr"), span);
-                let len_name_ident = Ident::new(&(name.to_string() + "_len"), span);
+                let name = get_arg_name(&*t).unwrap();
+                let ptr_name_ident = Ident::new(&(name.to_string() + "_ptr"), Span::call_site());
+                let len_name_ident = Ident::new(&(name.to_string() + "_len"), Span::call_site());
 
                 let ptr_arg: FnArg = parse_quote! (#ptr_name_ident: *const u8);
                 new_args.push(ptr_arg);
@@ -121,13 +157,16 @@ fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
                 };
 
                 stmt_vec.push(stmt);
+                method_json.arguments.push(Args { name: name.to_string(), ty: ValueType::Bytes });
             }
-            if is_plain_type_for_type(&*t.ty) {
+            let plain_type = is_plain_type_for_type(&*t.ty);
+            if plain_type.0 {
                 // println!("is plain.");
                 new_args.push(input.clone());
-                let name = get_arg_name(&*t).unwrap().0;
+                let name = get_arg_name(&*t).unwrap();
                 let call_expr: Expr = parse_quote! (#name);
                 call_args.push(call_expr);
+                method_json.arguments.push(Args { name: name.to_string(), ty: ValueType::from(plain_type.1) });
             }
         }
     }
@@ -135,15 +174,28 @@ fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
     let mut callback_name = String::from("callback_");
     if let ReturnType::Default = method.sig.output {
         callback_name.push_str("null");
+        method_json.ret.ty = ValueType::Null;
+    };
+
+    if let ReturnType::Type(_, ty) = method.sig.output.clone() {
+        if is_bytes_type_for_type(&*ty) {
+            callback_name.push_str("bytes");
+            method_json.ret.ty = ValueType::Bytes;
+        }
     };
 
     if let ReturnType::Type(_, ty) = method.sig.output {
-        if is_bytes_type_for_type(&*ty) {
-            callback_name.push_str("bytes");
+        let plain_type = is_plain_type_for_type(&*ty);
+        if plain_type.0 {
+            callback_name.push_str(plain_type.1);
+            method_json.ret.ty = ValueType::from(plain_type.1);
         }
     };
+
+    // println!("{}", serde_json::to_string_pretty(&method_json).unwrap());
+
     let callback_name_ident = Ident::new(&callback_name, Span::call_site());
-    parse_quote! {
+    (parse_quote! {
         #[no_mangle]
         pub extern fn #func_name_ident (index: usize, #new_args) {
             let mut actor = ACTOR.actor.borrow_mut();
@@ -154,10 +206,10 @@ fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
                 mw_rt::rpc::#callback_name_ident(index, result);
             });
         }
-    }
+    }, method_json)
 }
 
-fn process_func(func: ImplItem, struct_name: String) -> Option<ItemFn> {
+fn process_func(func: ImplItem, struct_name: String) -> Option<(ItemFn, Method)> {
     if let ImplItem::Method(m) = func.clone() {
         if let Some(_) = m.sig.asyncness {
             return Some(process_async(m, struct_name));
@@ -166,18 +218,27 @@ fn process_func(func: ImplItem, struct_name: String) -> Option<ItemFn> {
     None
 }
 
-pub fn expose(_arg: TokenStream, input: TokenStream) -> TokenStream {
+pub fn expose(_args: TokenStream, input: TokenStream) -> TokenStream {
     let mut parsed = parse_macro_input!(input as ItemImpl);
-    // println!("{:?}", parsed);
     let mut v = Vec::new();
 
+    let self_name = if let Type::Path(p) = &*parsed.self_ty {
+        p.path.get_ident().unwrap().to_string().to_case(Case::Snake)
+    } else {
+        panic!("compile error");
+    };
+
+    let mut method_json_array = Vec::new();
+
     for func in &mut parsed.items {
-        let self_ty = *parsed.self_ty.clone();
-        let mut hasher = DefaultHasher::new();
-        self_ty.hash(&mut hasher);
-        let f = process_func(func.clone(), format!("{}", hasher.finish()));
-        v.push(f)
+        // to deal option
+        if let Some((f, mj)) = process_func(func.clone(), self_name.clone()) {
+            v.push(f);
+            method_json_array.push(mj);
+        }
     }
+
+    fs::write(String::from("target/abi") + &self_name + ".json", serde_json::to_string_pretty(&method_json_array).unwrap()).unwrap();
 
     let expand = quote! {
         #parsed

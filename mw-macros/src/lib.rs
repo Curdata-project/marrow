@@ -48,3 +48,5 @@ pub fn actor_attr(_arg: TokenStream, input: TokenStream) -> TokenStream {
 pub fn expose(_arg: TokenStream, input: TokenStream) -> TokenStream {
     actor::expose(_arg, input)
 }
+
+mod generator;
