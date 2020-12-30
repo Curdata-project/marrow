@@ -11,6 +11,8 @@ import { startServer } from "./rpc/server";
 
 export let wasm_exports: any;
 
+const __callback_u32 = () => {};
+
 const import_object = {
   wstd: {
     print,
@@ -18,9 +20,9 @@ const import_object = {
     _request_callback,
     _sql_run_callback,
     _sql_query_callback,
-    _get_timestamp,
-    _sql_operate_callback,
-    _gen_rand32_callback,
+  },
+  mw_rt: {
+    __callback_u32,
   }
 };
 
