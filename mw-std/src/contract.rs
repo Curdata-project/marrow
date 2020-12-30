@@ -9,16 +9,13 @@ use core::pin::Pin;
 use core::task::{Context, Poll, Waker};
 
 // sync func
-pub fn do_load(bytes:&[u8])->i32{
-
+pub fn do_load(bytes: &[u8]) -> i32 {
     #[link(wasm_import_module = "wstd")]
-    extern "C"{
-        fn _load_contract(ptr:*const u8, size: usize)->i32;
+    extern "C" {
+        fn _load_contract(ptr: *const u8, size: usize) -> i32;
     }
 
-    unsafe {
-        _load_contract(bytes.as_ptr(), bytes.len())
-    }
+    unsafe { _load_contract(bytes.as_ptr(), bytes.len()) }
 }
 
 unsafe extern "C" fn hook_number<F>(user_data: *mut c_void, result: i32)
@@ -29,23 +26,24 @@ where
 }
 
 //async func
-pub fn load_callback<F>(bytes:&[u8],mut f: F)
-where 
+pub fn load_callback<F>(bytes: &[u8], mut f: F)
+where
     F: FnMut(i32),
 {
     #[link(wasm_import_module = "wstd")]
-    extern "C"{
+    extern "C" {
         fn _load_contract_callback(
-            ptr:*const u8, 
+            ptr: *const u8,
             size: usize,
             cb: unsafe extern "C" fn(*mut c_void, i32),
-            user_data: *mut c_void,);
+            user_data: *mut c_void,
+        );
     }
 
     let user_data = &mut f as *mut _ as *mut c_void;
 
-    unsafe{
-        _load_contract_callback(bytes.as_ptr(), bytes.len(), hook_number::<F>,user_data);
+    unsafe {
+        _load_contract_callback(bytes.as_ptr(), bytes.len(), hook_number::<F>, user_data);
     }
 }
 
@@ -60,8 +58,7 @@ struct NumberInner {
     task: Option<Waker>,
 }
 
-
-impl Future for NumberResult{
+impl Future for NumberResult {
     type Output = i32;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -77,19 +74,19 @@ impl Future for NumberResult{
     }
 }
 
-impl NumberResult{
+impl NumberResult {
     fn default() -> Self {
-        NumberResult{
-            inner: Rc::new(RefCell::new(NumberInner::default()))
+        NumberResult {
+            inner: Rc::new(RefCell::new(NumberInner::default())),
         }
     }
 }
 
-pub fn loda(bytes:&[u8])->NumberResult{
+pub fn loda(bytes: &[u8]) -> NumberResult {
     let result = NumberResult::default();
     let mut inner = result.inner.borrow_mut();
 
-    load_callback(bytes, |result:i32|{
+    load_callback(bytes, |result: i32| {
         inner.result = Some(result);
 
         let task_op = inner.task.as_ref();
@@ -100,4 +97,3 @@ pub fn loda(bytes:&[u8])->NumberResult{
 
     result.clone()
 }
-
