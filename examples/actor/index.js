@@ -10,7 +10,7 @@ const runtime = require('tools');
 const modules = [
     {
         name: "demo",
-        path: "target/wasm32-unknown-unknown/release/demo.wasm"
+        path: "target/wasm32-unknown-unknown/release/actor.wasm"
     }
 ];
 
