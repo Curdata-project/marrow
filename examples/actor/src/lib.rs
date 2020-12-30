@@ -33,7 +33,7 @@ impl MyActor {
         &[0u8; 10]
     }
 
-    pub async fn async_return_bytes(&mut self) -> &[u8] {
+    pub async fn async_return_bytes(&mut self, t: u8, bytes1: &[u8], bytes2: &[u8]) -> &[u8] {
         &[0u8; 10]
     }
 }

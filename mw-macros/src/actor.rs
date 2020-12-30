@@ -8,7 +8,8 @@ use std::hash::Hash;
 use std::hash::Hasher;
 use syn::parse_quote;
 use syn::{
-    parse_macro_input, Ident, ImplItem, ImplItemMethod, ItemFn, ItemImpl, ItemStruct, ReturnType,Type
+    parse_macro_input, punctuated::Punctuated, Expr, FnArg, Ident, ImplItem, ImplItemMethod,
+    ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt
 };
 
 /// Declare an main
@@ -55,12 +56,81 @@ pub fn actor(_arg: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+fn is_bytes_type_for_type(ty: &Type) -> bool {
+    if let Type::Reference(tr) = ty {
+        if let Type::Slice(ts) = &*tr.elem {
+            if let Type::Path(path) = &*ts.elem {
+                if path.path.get_ident().unwrap().to_string() == "u8" {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+fn is_plain_type_for_type(ty: &Type) -> bool {
+    if let Type::Path(path) = &*ty {
+        if path.path.get_ident().unwrap().to_string() == "u8" {
+            return true;
+        }
+    }
+    false
+}
+
+fn get_arg_name(ty: &PatType) -> Option<(Ident, Span)> {
+    if let Pat::Ident(ident) = &*ty.pat {
+        return Some((ident.ident.clone(), ident.ident.span()));
+    }
+    None
+}
+
 fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
-    // let method_clone = method.clone();
     let func_name = String::from("rpc_") + &name + "_" + &method.sig.ident.to_string();
     let func_name_ident = Ident::new(&func_name, Span::call_site());
     let origin_func_name = method.sig.ident;
     // process args
+    let mut new_args = method.sig.inputs.clone();
+    let mut call_args = Punctuated::<Expr, Token![,]>::new();
+    let mut stmt_vec = Vec::new();
+    new_args.clear();
+    for input in method.sig.inputs.iter() {
+        // ignore self.
+        if let FnArg::Receiver(_) = input {}
+        if let FnArg::Typed(t) = input {
+            if is_bytes_type_for_type(&*t.ty) {
+                // push two args;
+                let name = get_arg_name(&*t).unwrap().0;
+                let span = get_arg_name(&*t).unwrap().1;
+                let ptr_name_ident = Ident::new(&(name.to_string() + "_ptr"), span);
+                let len_name_ident = Ident::new(&(name.to_string() + "_len"), span);
+
+                let ptr_arg: FnArg = parse_quote! (#ptr_name_ident: *const u8);
+                new_args.push(ptr_arg);
+
+                let len_arg: FnArg = parse_quote! (#len_name_ident: usize);
+                new_args.push(len_arg);
+
+                let call_expr: Expr = parse_quote! (#name);
+                call_args.push(call_expr);
+
+                let stmt: Stmt = parse_quote! {
+                    let #name = unsafe {
+                        core::slice::from_raw_parts(#ptr_name_ident, #len_name_ident)
+                    };
+                };
+
+                stmt_vec.push(stmt);
+            }
+            if is_plain_type_for_type(&*t.ty) {
+                // println!("is plain.");
+                new_args.push(input.clone());
+                let name = get_arg_name(&*t).unwrap().0;
+                let call_expr: Expr = parse_quote! (#name);
+                call_args.push(call_expr);
+            }
+        }
+    }
     // process return
     let mut callback_name = String::from("callback_");
     if let ReturnType::Default = method.sig.output {
@@ -68,24 +138,19 @@ fn process_async(method: ImplItemMethod, name: String) -> ItemFn {
     };
 
     if let ReturnType::Type(_, ty) = method.sig.output {
-        if let Type::Reference(tr) = *ty {
-            if let Type::Slice(ts) = *tr.elem {
-                if let Type::Path(path) = *ts.elem {
-                    if path.path.get_ident().unwrap().to_string() == "u8" {
-                        callback_name.push_str("bytes");
-                    }
-                }
-            }
+        if is_bytes_type_for_type(&*ty) {
+            callback_name.push_str("bytes");
         }
     };
     let callback_name_ident = Ident::new(&callback_name, Span::call_site());
     parse_quote! {
         #[no_mangle]
-        pub extern fn #func_name_ident (index: usize) {
+        pub extern fn #func_name_ident (index: usize, #new_args) {
             let mut actor = ACTOR.actor.borrow_mut();
             let runtime = mw_rt::runtime::Runtime::new();
             runtime.spawn(async move {
-                let result = actor.#origin_func_name().await;
+                #(#stmt_vec)*
+                let result = actor.#origin_func_name(#call_args).await;
                 mw_rt::rpc::#callback_name_ident(index, result);
             });
         }
@@ -114,12 +179,9 @@ pub fn expose(_arg: TokenStream, input: TokenStream) -> TokenStream {
         v.push(f)
     }
 
-    let mut expand = quote! {
+    let expand = quote! {
         #parsed
+        #(#v)*
     };
-    // let mut expanded = TokenStream::from(expand);
-    for i in v {
-        i.to_tokens(&mut expand);
-    }
     TokenStream::from(expand)
 }
