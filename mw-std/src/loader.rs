@@ -54,7 +54,7 @@ impl LoadResult {
 }
 
 pub struct Instance {
-    handle: Option<i32>,
+    pub handle: Option<i32>,
 }
 
 impl Instance {
