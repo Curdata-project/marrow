@@ -38,7 +38,7 @@ export const startServer = async (modules: Modules) => {
 
       const error = hander(message, modulesResolved);
       if (error) {
-        const response: Response = {
+        const response: RPCResponse = {
           jsonrpc: "2.0",
           index: error.index,
           code: error.code,

@@ -3,10 +3,10 @@ import { setValueByBytes } from "../utils";
 
 import { wasm_exports } from "../index";
 
-export let moduleCache: CacheModule[] = [];
+export let moduleCache: RequestCache[] = [];
 
 export const hander = (message: IMessage, modules: any) => {
-  const data: Request = JSON.parse(message.utf8Data);
+  const data: RPCRequest = JSON.parse(message.utf8Data);
 
   console.log("receive a new message 📧", data);
   const { index, type, module, name, args } = data;
@@ -53,36 +53,13 @@ export const hander = (message: IMessage, modules: any) => {
   console.log("当前的 module cache", moduleCache);
   // Todo: 区别 callback
 
-  if (method.args.length === 0) {
-    modules[module].instance.exports[name](index);
-  }
-
-  if (method.args[0].type === "number") {
+  
+  
     modules[module].instance.exports[name](index, ...args);
-  }
+  
 
   if (method.args[0].type === "bytes") {
     const { ptr, length } = setValueByBytes(args);
-    modules[module].instance.exports[name](index, ptr, length);
-    wasm_exports._wasm_free(ptr, length);
-  }
-
-  if (method.args[0].type === "proto") {
-    const message = method.args[0].message;
-    const argsError = message.verify(args[0]);
-    if (argsError) {
-      console.log(argsError, "protobuf verify error");
-      return {
-        code: 32602,
-        message: "protobuf verify error",
-        index,
-      };
-    }
-    const msg = message.create(args[0]);
-    const buffer = message.encode(msg).finish();
-    console.log(buffer, "this is protobuf encode output");
-    const { ptr, length } = setValueByBytes(buffer);
-    console.log(`run wasm ${name} function and index=${index} ptr=${ptr} length=${length}`);
     modules[module].instance.exports[name](index, ptr, length);
     wasm_exports._wasm_free(ptr, length);
   }

@@ -4,7 +4,7 @@ import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
 import { _sql_run_callback, _sql_query_callback, _sql_operate_callback } from "./sqlite";
-import { _callback_number, _callback_ptr_size } from "./notify";
+import {  } from "./notify";
 import { _get_timestamp, _gen_rand32_callback } from "./utils";
 
 import { startServer } from "./rpc/server";
@@ -18,8 +18,6 @@ const import_object = {
     _request_callback,
     _sql_run_callback,
     _sql_query_callback,
-    _callback_number,
-    _callback_ptr_size,
     _get_timestamp,
     _sql_operate_callback,
     _gen_rand32_callback,
@@ -28,7 +26,7 @@ const import_object = {
 
 export const initModule = async (path: string) => {
   const wasm = fs.readFileSync(path);
-  // @ts-ignore
+  
   const { instance, module } = await WebAssembly.instantiate(wasm, import_object);
   wasm_exports = instance.exports;
   return instance;
