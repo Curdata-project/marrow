@@ -5,6 +5,7 @@ extern crate alloc;
 pub mod contract;
 pub mod debug;
 pub mod fs;
+pub mod loader;
 pub mod memory;
 pub mod notify;
 pub mod rand;
