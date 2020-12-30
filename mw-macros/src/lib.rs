@@ -50,3 +50,9 @@ pub fn expose(_arg: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 mod generator;
+
+#[proc_macro_attribute]
+pub fn method(_arg: TokenStream, input: TokenStream) -> TokenStream {
+    // actor::expose(_arg, input)
+    input
+}
