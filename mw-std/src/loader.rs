@@ -89,7 +89,7 @@ pub fn loader(bytes: &[u8]) -> LoadResult {
     let mut inner = result.inner.borrow_mut();
 
     load_callback(bytes, move |result: i32| {
-        inner.result = Some(r);
+        inner.result = Some(result);
 
         let task_op = inner.task.as_ref();
         if task_op.is_some() {
