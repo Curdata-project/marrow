@@ -1,16 +1,6 @@
 //! time operate
 
 // get timestamp
-<<<<<<< HEAD
-pub fn get_timestamp() -> i64 {
-    #[link(wasm_import_module = "wstd")]
-    extern "C" {
-        fn _get_timestamp() -> i64;
-    }
-
-    unsafe { _get_timestamp() }
-}
-=======
 pub fn get_timestamp() -> i64 { 
     #[link(wasm_import_module = "wstd")] 
     extern "C" { 
@@ -18,4 +8,3 @@ pub fn get_timestamp() -> i64 {
     } 
     unsafe { _get_timestamp() } 
 }
->>>>>>> dev
