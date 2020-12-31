@@ -238,7 +238,8 @@ pub fn expose(_args: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
 
-    fs::write(String::from("target/abi") + &self_name + ".json", serde_json::to_string_pretty(&method_json_array).unwrap()).unwrap();
+    fs::create_dir_all(String::from("target/abi/")).unwrap();
+    fs::write(String::from("target/abi/") + &self_name + ".json", serde_json::to_string_pretty(&method_json_array).unwrap()).unwrap();
 
     let expand = quote! {
         #parsed
