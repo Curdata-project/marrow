@@ -58,6 +58,7 @@ pub struct Instance {
 }
 
 impl Instance {
+    #[allow(dead_code)]
     fn run(self, args: &[u8]) -> i32 {
         #[link(wasm_import_module = "wstd")]
         extern "C" {
