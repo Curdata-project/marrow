@@ -1,15 +1,15 @@
 import { IMessage } from "websocket";
-import { setValueByBytes } from "../utils";
 
-import { wasm_exports } from "../index";
+import { methodsList, modulesList, methodsNameIndex, modulesNameIndex } from "./server";
+import { sendResponseSync } from "../notify";
 
-export let moduleCache: RequestCache[] = [];
+export let requestCache: RequestCache[] = [];
 
-export const hander = (message: IMessage, modules: any) => {
-  const data: RPCRequest = JSON.parse(message.utf8Data);
+export const hander = (message: IMessage) => {
+  const requestData: RPCRequest = JSON.parse(message.utf8Data);
 
-  console.log("receive a new message 📧", data);
-  const { index, type, module, name, args } = data;
+  console.log("receive a new message 📧", requestData);
+  const { index, type, module, name, args } = requestData;
 
   if (!index || !type || !name || !args) {
     return {
@@ -19,7 +19,7 @@ export const hander = (message: IMessage, modules: any) => {
     };
   }
 
-  if (moduleCache.length !== 0 && moduleCache.map(item => item.index).includes(index)) {
+  if (requestCache.length !== 0 && requestCache.map(item => item.index).includes(index)) {
     return {
       code: 32603,
       message: "The requested index already exists",
@@ -27,9 +27,7 @@ export const hander = (message: IMessage, modules: any) => {
     };
   }
 
-  const method = modules[module][name];
-
-  if (!method) {
+  if (!methodsNameIndex.includes(name)) {
     return {
       code: 32601,
       message: "The method does not exist or is invalid",
@@ -37,31 +35,27 @@ export const hander = (message: IMessage, modules: any) => {
     };
   }
 
-  if (method.args.length !== args.length) {
+  if (!modulesNameIndex.includes(module)) {
     return {
       code: 32602,
-      message: `Invalid method parameter, ${method.args.length} defined but ${args.length} received`,
+      message: "The module of method does not exist or is invalid",
       index,
     };
   }
 
-  moduleCache.push({
-    proto: method.return,
-    index,
-  });
+  // get module and method for request
+  const curMethod = methodsList.find(method => method.name = name);
+  const curModule = modulesList.find(item => item.name = module);
 
-  console.log("当前的 module cache", moduleCache);
-  // Todo: 区别 callback
-
-  
-  
-    modules[module].instance.exports[name](index, ...args);
-  
-
-  if (method.args[0].type === "bytes") {
-    const { ptr, length } = setValueByBytes(args);
-    modules[module].instance.exports[name](index, ptr, length);
-    wasm_exports._wasm_free(ptr, length);
+  if (curMethod.ty === "sync") {
+    const result = curModule.instance.exports[name](...args);
+    const response = {
+      code: 0,
+      jsonrpc: "2.0",
+      index,
+      result,
+    };
+    sendResponseSync(response);
   }
 
 };

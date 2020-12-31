@@ -1,7 +1,11 @@
 import { socket } from "../rpc/server";
-import { moduleCache } from "../rpc/hander";
-import { getValue } from "../utils";
 
-
-
-// socket.send(JSON.stringify(response));
+export const sendResponseSync = ({ code, index, result, jsonrpc = "2.0" }: RPCResponse) => {
+  const response = {
+    jsonrpc,
+    code,
+    index,
+    result,
+  };
+  socket.send(JSON.stringify(response));
+};

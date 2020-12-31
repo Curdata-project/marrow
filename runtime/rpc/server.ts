@@ -2,22 +2,41 @@ import { server, connection } from "websocket";
 import * as http from "http";
 
 import { hander } from "./hander";
-import { parser } from "./parser";
+import { loadJson, wasmParser } from "./parser";
 
 export let socket: connection;
 
+export let methodsList: Method[];
+export let modulesList: ParseModuleList;
+
+export let methodsNameIndex: string[];
+export let modulesNameIndex: string[];
+
 export const startServer = async (modules: Modules) => {
 
-  let modulesResolved: any;
+  // load .json
+  try {
+    console.log("begin parser json");
+    const result = await loadJson("target/abi/");
+    methodsList = result;
+    methodsNameIndex = result.map(item => item.name);
+    console.log(result, "load json result");
+    console.log("json files parser success 🌟");
+  } catch (error) {
+    console.log("json parser fail", error);
+    return;
+  }
 
+  // load .wasm
   try {
     console.log("begin parser modules");
-    const result = await parser(modules);
-    modulesResolved = result;
-    console.log(result, "编译结果");
-    console.log("module parser success 🌟");
+    const result = await wasmParser(modules);
+    modulesList = result;
+    modulesNameIndex = result.map(item => item.name);
+    console.log(result, "load modules result");
+    console.log("wasm files parser success 🦀️");
   } catch (error) {
-    console.log("module parser fail", error);
+    console.log("wasm parser fail", error);
     return;
   }
 
@@ -36,7 +55,7 @@ export const startServer = async (modules: Modules) => {
 
     connect.on("message", async (message) => {
 
-      const error = hander(message, modulesResolved);
+      const error = hander(message);
       if (error) {
         const response: RPCResponse = {
           jsonrpc: "2.0",

@@ -3,13 +3,13 @@ type Modules = Module[];
 type Module = {
   name: string;
   path: string;
-  expose: Method[];
+  deps: string[];
 };
 
 type Method = {
   name: string;
+  module: string;
   ty: "async" | "sync";
-  index?: number;
   arguments: Arg[];
   return: Return;
 };

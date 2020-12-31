@@ -1,27 +1,35 @@
+import { promises as fs } from "fs";
 import { initModule } from "../index";
 
-// Todo: type defined
+export const loadJson = async (folder: string): Promise<Method[]> => {
+  const filesName = await fs.readdir(folder);
+  if (filesName.length === 0) {
+    console.log("empty folder");
+    return;
+  }
+  let result: Method[] = [];
+  for (let i = 0; i < filesName.length; i++) {
+    const buffer = await fs.readFile(`target/abi/${filesName[i]}`);
+    const data: Method[] = JSON.parse(buffer.toString());
+    const output = result.concat(data);
+    result = output;
+  }
+  return result;
+};
 
-
-export const parser = async (modules: any) => {
-  const outputModules: any = {};
+export const wasmParser = async (modules: Modules): Promise<ParseModuleList> => {
+  const parseModules: ParseModuleList = [];
 
   // Todo: Dependent collection and sorting
 
-  for (const item in modules) {
-    const curModule = modules[item];
-    outputModules[item] = {};
-
-    const instance = await initModule(curModule.path);
-    outputModules[item].instance = instance;
-
-    // init wasm module
+  for (let i = 0; i < modules.length; i++) {
+    const instance = await initModule(modules[i].path);
+    parseModules.push({
+      name: modules[i].name,
+      instance,
+    });
     instance.exports._entry();
-    console.log("entry");
-
-    const methodsList = curModule.expose;
-    
   }
 
-  return outputModules;
+  return parseModules;
 };
