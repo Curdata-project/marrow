@@ -8,7 +8,7 @@ use syn::parse_quote;
 use crate::generator::{Method, MethodType, ValueType, Ret, Args};
 use syn::{
     parse_macro_input, punctuated::Punctuated, Expr, FnArg, Ident, ImplItem, ImplItemMethod,
-    ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt
+    ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt, Signature,
 };
 use std::fs;
 
@@ -112,26 +112,14 @@ fn get_arg_name(ty: &PatType) -> Option<Ident> {
     None
 }
 
-fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
-    let func_name = String::from("rpc_") + &name + "_" + &method.sig.ident.to_string();
-    let func_name_ident = Ident::new(&func_name, Span::call_site());
-    let origin_func_name = method.sig.ident;
-    // process args
-    let mut new_args = method.sig.inputs.clone();
+fn process_sig(sig: &Signature, arguments: &mut Vec<Args>) -> (Punctuated::<FnArg, Token![,]>,Punctuated::<Expr, Token![,]>, Vec<Stmt>) {
+    let mut new_args = sig.inputs.clone();
     let mut call_args = Punctuated::<Expr, Token![,]>::new();
     let mut stmt_vec = Vec::new();
+
     new_args.clear();
-
-    let mut method_json = Method {
-        name: func_name,
-        ty: MethodType::Async,
-        arguments: Vec::new(),
-        ret: Ret {
-            ty: ValueType::Null,
-        }
-    };
-
-    for input in method.sig.inputs.iter() {
+    
+    for input in sig.inputs.iter() {
         // ignore self.
         if let FnArg::Receiver(_) = input {}
         if let FnArg::Typed(t) = input {
@@ -157,7 +145,7 @@ fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
                 };
 
                 stmt_vec.push(stmt);
-                method_json.arguments.push(Args { name: name.to_string(), ty: ValueType::Bytes });
+                arguments.push(Args { name: name.to_string(), ty: ValueType::Bytes });
             }
             let plain_type = is_plain_type_for_type(&*t.ty);
             if plain_type.0 {
@@ -166,10 +154,32 @@ fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
                 let name = get_arg_name(&*t).unwrap();
                 let call_expr: Expr = parse_quote! (#name);
                 call_args.push(call_expr);
-                method_json.arguments.push(Args { name: name.to_string(), ty: ValueType::from(plain_type.1) });
+                arguments.push(Args { name: name.to_string(), ty: ValueType::from(plain_type.1) });
             }
         }
     }
+
+    (new_args, call_args, stmt_vec)
+
+}
+
+fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
+    let func_name = String::from("rpc_") + &name + "_" + &method.sig.ident.to_string();
+    let func_name_ident = Ident::new(&func_name, Span::call_site());
+    
+    let mut method_json = Method {
+        name: func_name,
+        ty: MethodType::Async,
+        arguments: Vec::new(),
+        ret: Ret {
+            ty: ValueType::Null,
+        }
+    };
+
+    let (new_args, call_args, stmt_vec) = process_sig(&method.sig, &mut method_json.arguments);
+
+    let origin_func_name = method.sig.ident;
+
     // process return
     let mut callback_name = String::from("callback_");
     if let ReturnType::Default = method.sig.output {
@@ -209,10 +219,52 @@ fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
     }, method_json)
 }
 
+fn is_plain_type_for_return(ret: &ReturnType) -> bool {
+    if let ReturnType::Default = ret {
+        return true;
+    }
+    if let ReturnType::Type(_, t) = ret {
+        return is_plain_type_for_type(t).0;
+    }
+    false
+}
+
+fn process_plain(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
+    let func_name = String::from("rpc_") + &name + "_" + &method.sig.ident.to_string();
+    let func_name_ident = Ident::new(&func_name, Span::call_site());
+    let mut method_json = Method {
+        name: func_name,
+        ty: MethodType::Async,
+        arguments: Vec::new(),
+        ret: Ret {
+            ty: ValueType::Null,
+        }
+    };
+
+    let (new_args, call_args, stmt_vec) = process_sig(&method.sig, &mut method_json.arguments);
+
+    let origin_func_name = method.sig.ident;
+
+    let return_type = method.sig.output;
+
+    (parse_quote! {
+        #[no_mangle]
+        pub extern fn #func_name_ident (#new_args) #return_type {
+            let mut actor = ACTOR.actor.borrow_mut();
+            #(#stmt_vec)*
+            actor.#origin_func_name(#call_args)
+        }
+    }, method_json)
+}
+
 fn process_func(func: ImplItem, struct_name: String) -> Option<(ItemFn, Method)> {
     if let ImplItem::Method(m) = func.clone() {
         if let Some(_) = m.sig.asyncness {
             return Some(process_async(m, struct_name));
+        }
+        if m.sig.asyncness.is_none() && is_plain_type_for_return(&m.sig.output) {
+            // process plain type.
+            return Some(process_plain(m, struct_name));
         }
     }
     None
