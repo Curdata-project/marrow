@@ -3,7 +3,9 @@
 node_modules/
 
 # Sqlite3 db
-runtime/*.db
+**/*.db
 
-dist/
-package-lock.json
+**/dist
+**/package-lock.json
+
+**/yarn.lock
