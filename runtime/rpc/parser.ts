@@ -1,4 +1,3 @@
-import * as protobuf from "protobufjs";
 import { initModule } from "../index";
 
 // Todo: type defined
