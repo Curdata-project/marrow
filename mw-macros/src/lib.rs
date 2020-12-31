@@ -1,4 +1,5 @@
 extern crate proc_macro;
+extern crate proc_macro2;
 
 use proc_macro::TokenStream;
 use quote::*;
@@ -34,4 +35,24 @@ pub fn main(_arg: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
     TokenStream::from(expanded)
+}
+
+mod actor;
+
+#[proc_macro_attribute]
+pub fn actor_attr(_arg: TokenStream, input: TokenStream) -> TokenStream {
+    actor::actor(_arg, input)
+}
+
+#[proc_macro_attribute]
+pub fn expose(_arg: TokenStream, input: TokenStream) -> TokenStream {
+    actor::expose(_arg, input)
+}
+
+mod generator;
+
+#[proc_macro_attribute]
+pub fn method(_arg: TokenStream, input: TokenStream) -> TokenStream {
+    // actor::expose(_arg, input)
+    input
 }

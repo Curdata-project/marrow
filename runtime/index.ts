@@ -12,6 +12,8 @@ type Module = {
 
 export let wasm_exports: any;
 
+const __callback_u32 = () => {};
+
 const import_object = {
   wstd: {
     print,
@@ -19,6 +21,9 @@ const import_object = {
     _request_callback,
     _sql_run_callback,
     _sql_query_callback,
+  },
+  mw_rt: {
+    __callback_u32,
   }
 };
 
