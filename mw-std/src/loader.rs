@@ -53,6 +53,7 @@ impl LoadResult {
     }
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct Instance {
     pub handle: Option<i32>,
 }
