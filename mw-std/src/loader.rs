@@ -58,7 +58,7 @@ pub struct Instance {
 }
 
 impl Instance {
-    fn run(self, args: &[u8]) -> i32 {
+    pub fn run(self, args: &[u8]) -> i32 {
         #[link(wasm_import_module = "wstd")]
         extern "C" {
             fn _load_run(index: i32, ptr: *const u8, size: usize) -> i32;
