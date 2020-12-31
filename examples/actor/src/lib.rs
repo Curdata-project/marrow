@@ -25,7 +25,8 @@ impl Actor for MyActor {
 
 #[mw_rt::actor::expose]
 impl MyActor {
-    pub fn return_int(&mut self) -> usize {
+    #[mw_rt::actor::method]
+    pub fn return_int(&mut self, _bytes1: &[u8]) -> usize {
         1
     }
 
