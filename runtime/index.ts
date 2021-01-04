@@ -3,12 +3,11 @@ import * as fs from "fs";
 import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
-import { _sql_run_callback, _sql_query_callback } from "./sqlite";
+import { _sql_run_callback, _sql_query_callback, _sql_operate_callback } from "./sqlite";
+import {  } from "./notify";
+import { _get_timestamp, _gen_rand32_callback } from "./utils";
 
-type Module = {
-  name: string,
-  path: string,
-};
+import { startServer, startTest } from "./rpc/server";
 
 export let wasm_exports: any;
 
@@ -27,15 +26,17 @@ const import_object = {
   }
 };
 
-export const run = async (modules: Module[]) => {
-  for (let i = 0; i < modules.length; i++) {
-    const wasm = fs.readFileSync(modules[i].path);
-    // @ts-ignore
-    const { instance, module } = await WebAssembly.instantiate(wasm, import_object);
-    wasm_exports = instance.exports;
-    console.log(wasm_exports);
-    wasm_exports._entry();
-  }
+export const initModule = async (path: string) => {
+  const wasm = fs.readFileSync(path);
+  const { instance } = await WebAssembly.instantiate(wasm, import_object);
+  wasm_exports = instance.exports;
+  return instance;
 };
 
-// run(modules);
+export const test = async (modules: Module[]) => {
+  startTest(modules);
+};
+
+export const run = async (modules: Module[]) => {
+  startServer(modules);
+};
