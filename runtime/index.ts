@@ -7,7 +7,7 @@ import { _sql_run_callback, _sql_query_callback, _sql_operate_callback } from ".
 import {  } from "./notify";
 import { _get_timestamp, _gen_rand32_callback } from "./utils";
 
-import { startServer } from "./rpc/server";
+import { startServer, startTest } from "./rpc/server";
 
 export let wasm_exports: any;
 
@@ -31,6 +31,10 @@ export const initModule = async (path: string) => {
   const { instance } = await WebAssembly.instantiate(wasm, import_object);
   wasm_exports = instance.exports;
   return instance;
+};
+
+export const test = async (modules: Module[]) => {
+  startTest(modules);
 };
 
 export const run = async (modules: Module[]) => {

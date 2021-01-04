@@ -14,4 +14,4 @@ const modules = [
     }
 ];
 
-runtime.run(modules);
+runtime.test(modules);

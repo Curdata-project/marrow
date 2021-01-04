@@ -5,7 +5,7 @@ import { sendResponseSync } from "../notify";
 
 export let requestCache: RequestCache[] = [];
 
-export const hander = (message: IMessage) => {
+export const handler = (message: IMessage) => {
   const requestData: RPCRequest = JSON.parse(message.utf8Data);
 
   console.log("receive a new message 📧", requestData);
