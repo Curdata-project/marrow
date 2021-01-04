@@ -25,7 +25,7 @@ where
 }
 
 /// judgment table exists or not
-pub fn sql_operate_callback<F>(s: &str, mut f: F)
+pub fn sql_operate_callback<F>(bytes:&[u8], mut f: F)
 where
     F: FnMut(i32),
 {
@@ -39,7 +39,6 @@ where
         );
     }
     let user_data = &mut f as *mut _ as *mut c_void;
-    let bytes = s.as_bytes();
 
     unsafe {
         _sql_operate_callback(bytes.as_ptr(), bytes.len(), hook_number::<F>, user_data);
@@ -47,7 +46,7 @@ where
 }
 
 /// 封装调用的js接口，用来create table,update,delete,modify
-pub fn sql_run_callback<F>(s: &str, mut f: F)
+pub fn sql_run_callback<F>(bytes: &[u8], mut f: F)
 where
     F: FnMut(*const u8, usize),
 {
@@ -65,7 +64,7 @@ where
 
     let user_data = &mut f as *mut _ as *mut c_void;
 
-    let bytes = s.as_bytes();
+    // let bytes = s.as_bytes();
 
     // 调用提供的C-ABI接口
     unsafe {
@@ -74,7 +73,7 @@ where
 }
 
 /// 查询用接口，
-pub fn sql_query_callback<F>(s: &str, mut f: F)
+pub fn sql_query_callback<F>(bytes:&[u8], mut f: F)
 where
     F: FnMut(*const u8, usize),
 {
@@ -92,7 +91,7 @@ where
 
     let user_data = &mut f as *mut _ as *mut c_void;
 
-    let bytes = s.as_bytes();
+    // let bytes = s.as_bytes();
 
     // 调用提供的C-ABI接口
     unsafe {
@@ -175,7 +174,7 @@ impl Future for OperateSqlResult {
 
 /// ty:0 update/create/modify
 /// ty:1 query
-pub fn sql_execute(s: &str, ty: u8) -> RunSqlResult {
+pub fn sql_execute(bytes: &[u8], ty: u8) -> RunSqlResult {
     let result = RunSqlResult::default();
     let mut inner = result.inner.borrow_mut();
 
@@ -190,19 +189,19 @@ pub fn sql_execute(s: &str, ty: u8) -> RunSqlResult {
     };
 
     match ty {
-        0 => sql_run_callback(s, closure),
-        1 => sql_query_callback(s, closure),
+        0 => sql_run_callback(bytes, closure),
+        1 => sql_query_callback(bytes, closure),
         _ => (),
     };
 
     result.clone()
 }
 
-pub fn sql_table_exist(s: &str) -> OperateSqlResult {
+pub fn sql_table_exist(bytes:&[u8]) -> OperateSqlResult {
     let result = OperateSqlResult::default();
     let mut inner = result.inner.borrow_mut();
 
-    sql_operate_callback(s, move |r: i32| {
+    sql_operate_callback(bytes, move |r: i32| {
         inner.result = Some(r);
 
         let task_op = inner.task.as_ref();
