@@ -59,3 +59,9 @@ pub fn callback_bytes(index: usize, result: &[u8]) {
     let len = result.len();
     unsafe { __callback_bytes(index, ptr, len) }
 }
+
+pub fn callback_bytes_vec(index: usize, result: alloc::vec::Vec<u8>) {
+    let ptr = result.as_ptr();
+    let len = result.len();
+    unsafe { __callback_bytes(index, ptr, len) }
+}

@@ -8,7 +8,7 @@ use syn::parse_quote;
 use crate::generator::{Method, MethodType, ValueType, Ret, Args};
 use syn::{
     parse_macro_input, punctuated::Punctuated, Expr, FnArg, Ident, ImplItem, ImplItemMethod,
-    ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt, Signature,
+    ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt, Signature, Path
 };
 use std::fs;
 
@@ -56,53 +56,55 @@ pub fn actor(_arg: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-fn is_bytes_type_for_type(ty: &Type) -> bool {
+fn get_type(ty: &Type) -> ValueType {
+    if let Type::Path(path) = &*ty {
+        if path.path.is_ident("u8") {
+            return ValueType::U8;
+        }
+        if path.path.is_ident("u16") {
+            return ValueType::U16;
+        }
+        if path.path.is_ident("u32") {
+            return ValueType::U32;
+        }
+        if path.path.is_ident("u64") {
+            return ValueType::U64;
+        }
+        if path.path.is_ident("i8") {
+            return ValueType::I8;
+        }
+        if path.path.is_ident("i16") {
+            return ValueType::I16;
+        }
+        if path.path.is_ident("i32") {
+            return ValueType::I32;
+        }
+        if path.path.is_ident("i64") {
+            return ValueType::I64;
+        }
+        if path.path.is_ident("usize") {
+            return ValueType::Usize;
+        }
+        if path.path.is_ident("isize") {
+            return ValueType::Usize;
+        }
+        let vec_path: Path = parse_quote!(Vec<u8>);
+        let vec_alloc_path: Path = parse_quote!(alloc::vec::Vec<u8>);
+        if path.path == vec_path || path.path == vec_alloc_path {
+            // println!("asdasdasdas");
+            return ValueType::BytesVec;
+        }
+    }
     if let Type::Reference(tr) = ty {
         if let Type::Slice(ts) = &*tr.elem {
             if let Type::Path(path) = &*ts.elem {
-                if path.path.get_ident().unwrap().to_string() == "u8" {
-                    return true;
+                if path.path.is_ident("u8") {
+                    return ValueType::Bytes;
                 }
             }
         }
     }
-    false
-}
-
-fn is_plain_type_for_type(ty: &Type) -> (bool, &str) {
-    if let Type::Path(path) = &*ty {
-        if path.path.get_ident().unwrap().to_string() == "u8" {
-            return (true, "u8");
-        }
-        if path.path.get_ident().unwrap().to_string() == "u16" {
-            return (true, "u16");
-        }
-        if path.path.get_ident().unwrap().to_string() == "u32" {
-            return (true, "u32");
-        }
-        if path.path.get_ident().unwrap().to_string() == "u64" {
-            return (true, "u64");
-        }
-        if path.path.get_ident().unwrap().to_string() == "i8" {
-            return (true, "i8");
-        }
-        if path.path.get_ident().unwrap().to_string() == "i16" {
-            return (true, "i16");
-        }
-        if path.path.get_ident().unwrap().to_string() == "i32" {
-            return (true, "i32");
-        }
-        if path.path.get_ident().unwrap().to_string() == "i64" {
-            return (true, "i64");
-        }
-        if path.path.get_ident().unwrap().to_string() == "usize" {
-            return (true, "usize");
-        }
-        if path.path.get_ident().unwrap().to_string() == "isize" {
-            return (true, "isize");
-        }
-    }
-    (false, "")
+    ValueType::Null
 }
 
 fn get_arg_name(ty: &PatType) -> Option<Ident> {
@@ -123,7 +125,8 @@ fn process_sig(sig: &Signature, arguments: &mut Vec<Args>) -> (Punctuated::<FnAr
         // ignore self.
         if let FnArg::Receiver(_) = input {}
         if let FnArg::Typed(t) = input {
-            if is_bytes_type_for_type(&*t.ty) {
+            let ty = get_type(&*t.ty);
+            if ty.is_bytes() {
                 // push two args;
                 let name = get_arg_name(&*t).unwrap();
                 let ptr_name_ident = Ident::new(&(name.to_string() + "_ptr"), Span::call_site());
@@ -147,14 +150,14 @@ fn process_sig(sig: &Signature, arguments: &mut Vec<Args>) -> (Punctuated::<FnAr
                 stmt_vec.push(stmt);
                 arguments.push(Args { name: name.to_string(), ty: ValueType::Bytes });
             }
-            let plain_type = is_plain_type_for_type(&*t.ty);
-            if plain_type.0 {
+            let plain_type = get_type(&*t.ty);
+            if plain_type.is_plain() {
                 // println!("is plain.");
                 new_args.push(input.clone());
                 let name = get_arg_name(&*t).unwrap();
                 let call_expr: Expr = parse_quote! (#name);
                 call_args.push(call_expr);
-                arguments.push(Args { name: name.to_string(), ty: ValueType::from(plain_type.1) });
+                arguments.push(Args { name: name.to_string(), ty: plain_type });
             }
         }
     }
@@ -187,22 +190,11 @@ fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
         method_json.ret.ty = ValueType::Null;
     };
 
-    if let ReturnType::Type(_, ty) = method.sig.output.clone() {
-        if is_bytes_type_for_type(&*ty) {
-            callback_name.push_str("bytes");
-            method_json.ret.ty = ValueType::Bytes;
-        }
-    };
-
     if let ReturnType::Type(_, ty) = method.sig.output {
-        let plain_type = is_plain_type_for_type(&*ty);
-        if plain_type.0 {
-            callback_name.push_str(plain_type.1);
-            method_json.ret.ty = ValueType::from(plain_type.1);
-        }
+        let plain_type = get_type(&*ty);
+        callback_name.push_str(plain_type.to_json_type());
+        method_json.ret.ty = plain_type;
     };
-
-    // println!("{}", serde_json::to_string_pretty(&method_json).unwrap());
 
     let callback_name_ident = Ident::new(&callback_name, Span::call_site());
     (parse_quote! {
@@ -224,7 +216,8 @@ fn is_plain_type_for_return(ret: &ReturnType) -> bool {
         return true;
     }
     if let ReturnType::Type(_, t) = ret {
-        return is_plain_type_for_type(t).0;
+        let ty = get_type(t);
+        return ty.is_plain();
     }
     false
 }
