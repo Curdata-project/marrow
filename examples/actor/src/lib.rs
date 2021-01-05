@@ -7,6 +7,7 @@ extern crate alloc;
 use alloc::boxed::Box;
 use core::cell::RefCell;
 use mw_rt::actor::Actor;
+use alloc::vec::Vec;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -37,5 +38,10 @@ impl MyActor {
     #[mw_rt::actor::method]
     pub async fn async_return_bytes(&mut self, _t: u8, _bytes1: &[u8], _bytes2: &[u8]) -> u8 {
         1
+    }
+
+    #[mw_rt::actor::method]
+    pub async fn async_return_bytes_vec(&mut self) -> Vec<u8> {
+        Vec::new()
     }
 }
