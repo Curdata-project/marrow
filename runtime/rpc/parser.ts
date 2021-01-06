@@ -38,3 +38,29 @@ export const wasmParser = async (modules: Modules): Promise<ParseModuleList> => 
 
   return parseModules;
 };
+
+export const depsParser = (modules: Modules): Modules => {
+  const used = new Set;
+  const result: Modules = [];
+  let nameContainer: any[];
+  let moduleContainer: any[];
+  let length;
+
+  do {
+    length = modules.length;
+    nameContainer = [];
+    moduleContainer = [];
+    modules = modules.filter(item => {
+      if (!item.deps.every(Set.prototype.has, used)) {
+        return true;
+      }
+      nameContainer.push(item.name);
+      moduleContainer.push(item);
+    });
+    result.push(...moduleContainer);
+    nameContainer.forEach(Set.prototype.add, used);
+  } while (modules.length && modules.length !== length);
+
+  result.push(...modules);
+  return result;
+};
