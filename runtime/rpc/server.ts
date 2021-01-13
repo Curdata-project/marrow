@@ -6,34 +6,27 @@ import { loadJson, wasmParser } from "./parser";
 
 export let socket: connection;
 
-export let methodsList: Method[];
+export let methodsList: any;
 export let modulesList: ParseModuleList;
 
-export let methodsNameIndex: string[];
 export let modulesNameIndex: string[];
 
 // For Make Test
 export const startTest = async (modules: Modules) => {
-  // load .json
   try {
     console.log("begin parser json");
     const result = await loadJson("target/abi/");
     methodsList = result;
-    methodsNameIndex = result.map(item => item.name);
-    console.log(result, "load json result");
     console.log("json files parser success 🌟");
   } catch (error) {
     console.log("json parser fail", error);
     return;
   }
 
-  // load .wasm
   try {
-    console.log("begin parser modules");
     const result = await wasmParser(modules);
     modulesList = result;
     modulesNameIndex = result.map(item => item.name);
-    console.log(result, "load modules result");
     console.log("wasm files parser success 🦀️");
   } catch (error) {
     console.log("wasm parser fail", error);
@@ -45,11 +38,8 @@ export const startServer = async (modules: Modules) => {
 
   // load .json
   try {
-    console.log("begin parser json");
     const result = await loadJson("target/abi/");
     methodsList = result;
-    methodsNameIndex = result.map(item => item.name);
-    console.log(result, "load json result");
     console.log("json files parser success 🌟");
   } catch (error) {
     console.log("json parser fail", error);
@@ -58,11 +48,9 @@ export const startServer = async (modules: Modules) => {
 
   // load .wasm
   try {
-    console.log("begin parser modules");
     const result = await wasmParser(modules);
     modulesList = result;
     modulesNameIndex = result.map(item => item.name);
-    console.log(result, "load modules result");
     console.log("wasm files parser success 🦀️");
   } catch (error) {
     console.log("wasm parser fail", error);
@@ -83,7 +71,6 @@ export const startServer = async (modules: Modules) => {
     socket = connect;
 
     connect.on("message", async (message) => {
-
       const error = handler(message);
       if (error) {
         const response: RPCResponse = {
@@ -97,8 +84,8 @@ export const startServer = async (modules: Modules) => {
 
     });
 
-    connect.on("close", () => {
-      console.log("close");
+    connect.on("close", (reasonCode, description) => {
+      console.log("close", reasonCode, description);
     });
 
   });

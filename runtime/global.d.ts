@@ -34,10 +34,7 @@ type ParseModule = {
 
 type ParseMethodList = Method[];
 
-type RequestCache = {
-  index: number;
-  proto: any;
-};
+type RequestCache = number[];
 
 type RPCRequest = {
   jsonrpc: string;
