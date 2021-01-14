@@ -7,7 +7,6 @@ use core::future::Future;
 use core::option::Option::Some;
 use core::pin::Pin;
 use core::task::{Context, Poll, Waker};
-
 unsafe extern "C" fn hook<F>(user_data: *mut c_void, ptr: *const u8, size: usize)
 where
     F: FnMut(*const u8, usize),
