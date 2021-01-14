@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ValueType {
@@ -92,4 +92,3 @@ pub struct Method {
     pub arguments: Vec<Args>,
     pub ret: Ret,
 }
-

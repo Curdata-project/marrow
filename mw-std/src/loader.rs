@@ -63,7 +63,7 @@ impl Instance {
         #[link(wasm_import_module = "wstd")]
         extern "C" {
             fn _load_run(index: i32, ptr: *const u8, size: usize) -> i32;
-        };
+        }
 
         unsafe { _load_run(self.handle.unwrap(), args.as_ptr(), args.len()) }
     }
