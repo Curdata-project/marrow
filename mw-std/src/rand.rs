@@ -1,6 +1,6 @@
 //! generate random number
 
-use alloc::rc::Rc;
+use alloc::{rc::Rc, vec::Vec};
 use core::cell::RefCell;
 use core::ffi::c_void;
 use core::future::Future;
@@ -44,8 +44,7 @@ pub struct Rand32Result {
 
 #[derive(Debug, Clone, Default)]
 struct Inner {
-    ptr: Option<*const u8>,
-    size: Option<usize>,
+    v: Option<Vec<u8>>,
     task: Option<Waker>,
 }
 
@@ -63,11 +62,8 @@ impl Future for Rand32Result {
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.borrow_mut();
 
-        if inner.ptr.is_some() && inner.size.is_some() {
-            let v = unsafe {
-                alloc::slice::from_raw_parts(inner.ptr.unwrap(), inner.size.unwrap()).to_vec()
-            };
-            return Poll::Ready(v);
+        if inner.v.is_some() {
+            return Poll::Ready(inner.v.clone().unwrap());
         }
 
         inner.task = Some(cx.waker().clone());
@@ -80,9 +76,8 @@ pub fn gen_rand32() -> Rand32Result {
     let mut inner = result.inner.borrow_mut();
 
     gen_rand32_callback(move |ptr: *const u8, size: usize| {
-        inner.ptr = Some(ptr);
-        inner.size = Some(size);
-
+        let v = unsafe { alloc::slice::from_raw_parts(ptr, size).to_vec() };
+        inner.v = Some(v);
         let task_op = inner.task.as_ref();
         if task_op.is_some() {
             task_op.unwrap().wake_by_ref();

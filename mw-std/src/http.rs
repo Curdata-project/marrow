@@ -1,4 +1,4 @@
-use alloc::rc::Rc;
+use alloc::{rc::Rc, vec::Vec};
 use core::cell::RefCell;
 use core::ffi::c_void;
 use core::future::Future;
@@ -13,7 +13,10 @@ where
     (*(user_data as *mut F))(ptr, size)
 }
 
-fn http_request_callback<F>(bytes:&[u8],mut f:F) where F:FnMut(*const u8, usize),{
+fn http_request_callback<F>(bytes: &[u8], mut f: F)
+where
+    F: FnMut(*const u8, usize),
+{
     #[link(wasm_import_module = "wstd")]
     extern "C" {
         fn _http_request_callback(
@@ -29,7 +32,7 @@ fn http_request_callback<F>(bytes:&[u8],mut f:F) where F:FnMut(*const u8, usize)
 
     // 调用提供的C-ABI接口
     unsafe {
-        _http_request_callback(bytes.as_ptr(), bytes.len(),hook::<F>, user_data);
+        _http_request_callback(bytes.as_ptr(), bytes.len(), hook::<F>, user_data);
     };
 }
 
@@ -40,9 +43,8 @@ pub struct HttpRequestResult {
 
 #[derive(Debug, Clone, Default)]
 struct Inner {
-    ptr: Option<*const u8>,
-    size: Option<usize>,
     task: Option<Waker>,
+    v: Option<Vec<u8>>,
 }
 
 impl HttpRequestResult {
@@ -59,11 +61,8 @@ impl Future for HttpRequestResult {
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.borrow_mut();
 
-        if inner.ptr.is_some() && inner.size.is_some() {
-            let v = unsafe {
-                alloc::slice::from_raw_parts(inner.ptr.unwrap(), inner.size.unwrap()).to_vec()
-            };
-            return Poll::Ready(v);
+        if inner.v.is_some() {
+            return Poll::Ready(inner.v.clone().unwrap());
         }
 
         inner.task = Some(cx.waker().clone());
@@ -71,13 +70,14 @@ impl Future for HttpRequestResult {
     }
 }
 
-pub fn http_request(bytes:&[u8]) -> HttpRequestResult{
+pub fn http_request(bytes: &[u8]) -> HttpRequestResult {
     let result = HttpRequestResult::default();
     let mut inner = result.inner.borrow_mut();
 
-    http_request_callback(bytes,move |ptr: *const u8, size: usize|{
-        inner.ptr = Some(ptr);
-        inner.size = Some(size);
+    http_request_callback(bytes, move |ptr: *const u8, size: usize| {
+        let v = unsafe { alloc::slice::from_raw_parts(ptr, size).to_vec() };
+
+        inner.v = Some(v);
 
         let task_op = inner.task.as_ref();
         if task_op.is_some() {
@@ -88,8 +88,6 @@ pub fn http_request(bytes:&[u8]) -> HttpRequestResult{
     result
 }
 
-
-
 #[no_mangle]
 pub extern "C" fn call_http_request_callback_fn(
     ptr: *const u8,
@@ -99,6 +97,3 @@ pub extern "C" fn call_http_request_callback_fn(
 ) {
     unsafe { cb(user_data, ptr, size) }
 }
-
-
-

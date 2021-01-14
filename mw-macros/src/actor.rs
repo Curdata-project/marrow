@@ -1,16 +1,16 @@
 extern crate proc_macro;
 
+use crate::generator::{Args, Method, MethodType, Ret, ValueType};
+use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::*;
-use convert_case::{Case, Casing};
+use std::fs;
 use syn::parse_quote;
-use crate::generator::{Method, MethodType, ValueType, Ret, Args};
 use syn::{
     parse_macro_input, punctuated::Punctuated, Expr, FnArg, Ident, ImplItem, ImplItemMethod,
-    ItemFn, ItemImpl, ItemStruct, Pat, PatType, ReturnType, Type, Token, Stmt, Signature, Path
+    ItemFn, ItemImpl, ItemStruct, Pat, PatType, Path, ReturnType, Signature, Stmt, Token, Type,
 };
-use std::fs;
 
 /// Declare an main
 pub fn actor(_arg: TokenStream, input: TokenStream) -> TokenStream {
@@ -114,13 +114,20 @@ fn get_arg_name(ty: &PatType) -> Option<Ident> {
     None
 }
 
-fn process_sig(sig: &Signature, arguments: &mut Vec<Args>) -> (Punctuated::<FnArg, Token![,]>,Punctuated::<Expr, Token![,]>, Vec<Stmt>) {
+fn process_sig(
+    sig: &Signature,
+    arguments: &mut Vec<Args>,
+) -> (
+    Punctuated<FnArg, Token![,]>,
+    Punctuated<Expr, Token![,]>,
+    Vec<Stmt>,
+) {
     let mut new_args = sig.inputs.clone();
     let mut call_args = Punctuated::<Expr, Token![,]>::new();
     let mut stmt_vec = Vec::new();
 
     new_args.clear();
-    
+
     for input in sig.inputs.iter() {
         // ignore self.
         if let FnArg::Receiver(_) = input {}
@@ -148,7 +155,10 @@ fn process_sig(sig: &Signature, arguments: &mut Vec<Args>) -> (Punctuated::<FnAr
                 };
 
                 stmt_vec.push(stmt);
-                arguments.push(Args { name: name.to_string(), ty: ValueType::Bytes });
+                arguments.push(Args {
+                    name: name.to_string(),
+                    ty: ValueType::Bytes,
+                });
             }
             let plain_type = get_type(&*t.ty);
             if plain_type.is_plain() {
@@ -157,26 +167,28 @@ fn process_sig(sig: &Signature, arguments: &mut Vec<Args>) -> (Punctuated::<FnAr
                 let name = get_arg_name(&*t).unwrap();
                 let call_expr: Expr = parse_quote! (#name);
                 call_args.push(call_expr);
-                arguments.push(Args { name: name.to_string(), ty: plain_type });
+                arguments.push(Args {
+                    name: name.to_string(),
+                    ty: plain_type,
+                });
             }
         }
     }
 
     (new_args, call_args, stmt_vec)
-
 }
 
 fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
     let func_name = String::from("rpc_") + &name + "_" + &method.sig.ident.to_string();
     let func_name_ident = Ident::new(&func_name, Span::call_site());
-    
+
     let mut method_json = Method {
         name: func_name,
         ty: MethodType::Async,
         arguments: Vec::new(),
         ret: Ret {
             ty: ValueType::Null,
-        }
+        },
     };
 
     let (new_args, call_args, stmt_vec) = process_sig(&method.sig, &mut method_json.arguments);
@@ -197,18 +209,21 @@ fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
     };
 
     let callback_name_ident = Ident::new(&callback_name, Span::call_site());
-    (parse_quote! {
-        #[no_mangle]
-        pub extern fn #func_name_ident (index: usize, #new_args) {
-            let mut actor = ACTOR.actor.borrow_mut();
-            let runtime = mw_rt::runtime::Runtime::new();
-            runtime.spawn(async move {
-                #(#stmt_vec)*
-                let result = actor.#origin_func_name(#call_args).await;
-                mw_rt::rpc::#callback_name_ident(index, result);
-            });
-        }
-    }, method_json)
+    (
+        parse_quote! {
+            #[no_mangle]
+            pub extern fn #func_name_ident (index: usize, #new_args) {
+                let mut actor = ACTOR.actor.borrow_mut();
+                let runtime = mw_rt::runtime::Runtime::new();
+                runtime.spawn(async move {
+                    #(#stmt_vec)*
+                    let result = actor.#origin_func_name(#call_args).await;
+                    mw_rt::rpc::#callback_name_ident(index, result);
+                });
+            }
+        },
+        method_json,
+    )
 }
 
 fn is_plain_type_for_return(ret: &ReturnType) -> bool {
@@ -231,7 +246,7 @@ fn process_plain(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
         arguments: Vec::new(),
         ret: Ret {
             ty: ValueType::Null,
-        }
+        },
     };
 
     let (new_args, call_args, stmt_vec) = process_sig(&method.sig, &mut method_json.arguments);
@@ -240,14 +255,17 @@ fn process_plain(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
 
     let return_type = method.sig.output;
 
-    (parse_quote! {
-        #[no_mangle]
-        pub extern fn #func_name_ident (#new_args) #return_type {
-            let mut actor = ACTOR.actor.borrow_mut();
-            #(#stmt_vec)*
-            actor.#origin_func_name(#call_args)
-        }
-    }, method_json)
+    (
+        parse_quote! {
+            #[no_mangle]
+            pub extern fn #func_name_ident (#new_args) #return_type {
+                let mut actor = ACTOR.actor.borrow_mut();
+                #(#stmt_vec)*
+                actor.#origin_func_name(#call_args)
+            }
+        },
+        method_json,
+    )
 }
 
 fn process_func(func: ImplItem, struct_name: String) -> Option<(ItemFn, Method)> {
@@ -284,7 +302,11 @@ pub fn expose(_args: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     fs::create_dir_all(String::from("target/abi/")).unwrap();
-    fs::write(String::from("target/abi/") + &self_name + ".json", serde_json::to_string_pretty(&method_json_array).unwrap()).unwrap();
+    fs::write(
+        String::from("target/abi/") + &self_name + ".json",
+        serde_json::to_string_pretty(&method_json_array).unwrap(),
+    )
+    .unwrap();
 
     let expand = quote! {
         #parsed
