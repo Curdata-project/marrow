@@ -32,7 +32,6 @@ export const wasmParser = async (modules: Modules): Promise<ParseModuleList> => 
       name: ordered[i].name,
       instance,
     });
-    instance.exports._entry();
   }
 
   return parseModules;

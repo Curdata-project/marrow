@@ -40,7 +40,6 @@ export const initModule = async (module: Module) => {
     const wasm = fs.readFileSync(module.path);
     const { instance } = await WebAssembly.instantiate(wasm, import_object);
     wasm_exports = instance.exports;
-
     const curModuleExpose = methodsList[module.name].map((item: Method) => item.name);
     env[module.name] = {};
     for (let i = 0; i < curModuleExpose.length; i ++) {
@@ -51,6 +50,7 @@ export const initModule = async (module: Module) => {
         }
       };
     }
+    instance.exports._entry();
     return instance;
   } catch (error) {
     console.log(error);
