@@ -1,5 +1,3 @@
-//! generate random number
-
 use alloc::{rc::Rc, vec::Vec};
 use core::cell::RefCell;
 use core::ffi::c_void;
@@ -15,14 +13,15 @@ where
     (*(user_data as *mut F))(ptr, size)
 }
 
-pub fn gen_rand32_callback<F>(mut f: F)
+fn http_request_callback<F>(bytes: &[u8], mut f: F)
 where
     F: FnMut(*const u8, usize),
 {
-    // 外部C-ABI接口
     #[link(wasm_import_module = "wstd")]
     extern "C" {
-        fn _gen_rand32_callback(
+        fn _http_request_callback(
+            ptr: *const u8,
+            size: usize,
             //这里定义的是回调函数，传下去的hook指针和hook的数据指针，最后在里边执行
             cb: unsafe extern "C" fn(*mut c_void, *const u8, usize),
             user_data: *mut c_void,
@@ -33,30 +32,30 @@ where
 
     // 调用提供的C-ABI接口
     unsafe {
-        _gen_rand32_callback(hook::<F>, user_data);
+        _http_request_callback(bytes.as_ptr(), bytes.len(), hook::<F>, user_data);
     };
 }
 
 #[derive(Debug, Clone)]
-pub struct Rand32Result {
+pub struct HttpRequestResult {
     inner: Rc<RefCell<Inner>>,
 }
 
 #[derive(Debug, Clone, Default)]
 struct Inner {
-    v: Option<Vec<u8>>,
     task: Option<Waker>,
+    v: Option<Vec<u8>>,
 }
 
-impl Rand32Result {
+impl HttpRequestResult {
     pub fn default() -> Self {
-        Rand32Result {
+        HttpRequestResult {
             inner: Rc::new(RefCell::new(Default::default())),
         }
     }
 }
 
-impl Future for Rand32Result {
+impl Future for HttpRequestResult {
     type Output = alloc::vec::Vec<u8>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -71,13 +70,15 @@ impl Future for Rand32Result {
     }
 }
 
-pub fn gen_rand32() -> Rand32Result {
-    let result = Rand32Result::default();
+pub fn http_request(bytes: &[u8]) -> HttpRequestResult {
+    let result = HttpRequestResult::default();
     let mut inner = result.inner.borrow_mut();
 
-    gen_rand32_callback(move |ptr: *const u8, size: usize| {
+    http_request_callback(bytes, move |ptr: *const u8, size: usize| {
         let v = unsafe { alloc::slice::from_raw_parts(ptr, size).to_vec() };
+
         inner.v = Some(v);
+
         let task_op = inner.task.as_ref();
         if task_op.is_some() {
             task_op.unwrap().wake_by_ref();
@@ -88,7 +89,7 @@ pub fn gen_rand32() -> Rand32Result {
 }
 
 #[no_mangle]
-pub extern "C" fn call_gen_rand32_callback_fn(
+pub extern "C" fn call_http_request_callback_fn(
     ptr: *const u8,
     size: usize,
     cb: unsafe extern "C" fn(*mut c_void, *const u8, usize),
