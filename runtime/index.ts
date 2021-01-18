@@ -9,6 +9,7 @@ import { _sql_run_callback, _sql_query_callback, _sql_operate_callback } from ".
 import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run } from "./utils";
 
 import { startServer, startTest, methodsList } from "./rpc/server";
+import { log } from "./utils/log";
 
 export let wasm_exports: any;
 
@@ -53,7 +54,7 @@ export const initModule = async (module: Module) => {
     instance.exports._entry();
     return instance;
   } catch (error) {
-    console.log(error);
+    log().error(error);
   }
 };
 

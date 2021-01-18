@@ -1,9 +1,11 @@
+import { log } from "../utils/log";
+
 const __callback_u32 = (index: number, result: number) => {
 
 };
 
 const __callback_i32 = (index: number, result: number) => {
-  console.log(index, result, "from notify i32");
+  log().info(index, result, "from notify i32");
 };
 
 const __callback_u64 = (index: number, result: number) => {

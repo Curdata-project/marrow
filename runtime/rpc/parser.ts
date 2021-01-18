@@ -1,11 +1,12 @@
 import { promises as fs } from "fs";
 import { initModule } from "../index";
+import { log } from "../utils/log";
 
 export const loadJson = async (folder: string) => {
   try {
     const filesName = await fs.readdir(folder);
     if (filesName.length === 0) {
-      console.log("empty folder");
+      log().warn("empty folder");
       return;
     }
     const result: any = {};
@@ -16,7 +17,7 @@ export const loadJson = async (folder: string) => {
     }
     return result;
   } catch (error) {
-    console.log("folder not found");
+    log().error("folder not found");
     return {};
   }
 };

@@ -2,8 +2,8 @@ import * as util from "util";
 import * as crypto from "crypto";
 import * as protobuf from "protobufjs";
 
-
 import { wasm_exports } from "../index";
+import { log } from "../utils/log";
 
 export const setValue = (value: string) => {
   const textEncoder = new util.TextEncoder();
@@ -47,7 +47,7 @@ export const _gen_rand32_callback = (fn: number, addr: number) => {
   const protomessage = Sql.create(payload);
   const buffer = Buffer.from("hello rust ~");
   // const buffer = Sql.encode(protomessage).finish();
-  console.log(new Uint8Array(buffer));
+  log().info(new Uint8Array(buffer));
   // const target = new Uint8Array(buffer).slice(0, 4);
   // const textdeocde = new util.TextDecoder();
   // console.log(textdeocde.decode(target));

@@ -2,13 +2,14 @@ import { IMessage } from "websocket";
 
 import { modulesNameIndex, modulesList } from "./server";
 import { sendResponseSync } from "../notify";
+import { log } from "../utils/log";
 
 export let requestCache: RequestCache[] = [];
 
 export const handler = (message: IMessage) => {
   const requestData: any = JSON.parse(message.utf8Data);
 
-  console.log("receive a new message 📧", requestData.index);
+  log().info("receive a new message 📧", requestData.index);
   const { index, type, module, name, args } = requestData;
 
   if (!index || !type || !name || !args) {
@@ -40,7 +41,7 @@ export const handler = (message: IMessage) => {
 
   const argsBuffer = Buffer.from(args, "base64");
   const result = curModule.instance.exports[name](argsBuffer);
-  console.log(result, "result")
+  log().info(result, "result")
   const response = {
     code: 0,
     jsonrpc: "2.0",
