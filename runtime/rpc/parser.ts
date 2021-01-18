@@ -1,40 +1,49 @@
 import { promises as fs } from "fs";
-import { initModule } from "../index";
+import * as events from "events";
 
-export const loadJson = async (folder: string): Promise<Method[]> => {
+import { initModule } from "../index";
+import { log } from "../utils/log";
+
+export const event = new events.EventEmitter();
+
+export const loadJson = async (folder: string) => {
   try {
     const filesName = await fs.readdir(folder);
     if (filesName.length === 0) {
-      console.log("empty folder");
+      log().warn("empty folder");
       return;
     }
-    let result: Method[] = [];
+    const result: any = {};
     for (let i = 0; i < filesName.length; i++) {
       const buffer = await fs.readFile(`target/abi/${filesName[i]}`);
       const data: Method[] = JSON.parse(buffer.toString());
-      const output = result.concat(data);
-      result = output;
+      result[filesName[i].slice(0, -5)] = data;
     }
     return result;
   } catch (error) {
-    console.log("folder not found");
-    return [];
+    log().error("folder not found");
+    return {};
   }
 };
 
 export const wasmParser = async (modules: Modules): Promise<ParseModuleList> => {
   const parseModules: ParseModuleList = [];
 
-  // Todo: Dependent collection and sorting
+  const ordered = depsParser(modules);
 
-  for (let i = 0; i < modules.length; i++) {
-    const instance = await initModule(modules[i].path);
+  event.on("next_wasm_init", async (index: number) => {
+    const instance = await initModule(ordered[index]);
     parseModules.push({
-      name: modules[i].name,
+      name: ordered[index].name,
       instance,
     });
-    instance.exports._entry();
-  }
+  });
+
+  const instance = await initModule(ordered[0]);
+  parseModules.push({
+    name: ordered[0].name,
+    instance,
+  });
 
   return parseModules;
 };

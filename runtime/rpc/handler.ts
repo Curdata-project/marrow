@@ -1,14 +1,15 @@
 import { IMessage } from "websocket";
 
-import { methodsList, modulesList, methodsNameIndex, modulesNameIndex } from "./server";
+import { modulesNameIndex, modulesList } from "./server";
 import { sendResponseSync } from "../notify";
+import { log } from "../utils/log";
 
 export let requestCache: RequestCache[] = [];
 
 export const handler = (message: IMessage) => {
-  const requestData: RPCRequest = JSON.parse(message.utf8Data);
+  const requestData: any = JSON.parse(message.utf8Data);
 
-  console.log("receive a new message 📧", requestData);
+  log().info("receive a new message 📧", requestData.index);
   const { index, type, module, name, args } = requestData;
 
   if (!index || !type || !name || !args) {
@@ -19,18 +20,10 @@ export const handler = (message: IMessage) => {
     };
   }
 
-  if (requestCache.length !== 0 && requestCache.map(item => item.index).includes(index)) {
+  if (requestCache.length !== 0 && requestCache.includes(index)) {
     return {
       code: 32603,
       message: "The requested index already exists",
-      index,
-    };
-  }
-
-  if (!methodsNameIndex.includes(name)) {
-    return {
-      code: 32601,
-      message: "The method does not exist or is invalid",
       index,
     };
   }
@@ -44,18 +37,18 @@ export const handler = (message: IMessage) => {
   }
 
   // get module and method for request
-  const curMethod = methodsList.find(method => method.name = name);
   const curModule = modulesList.find(item => item.name = module);
 
-  if (curMethod.ty === "sync") {
-    const result = curModule.instance.exports[name](...args);
-    const response = {
-      code: 0,
-      jsonrpc: "2.0",
-      index,
-      result,
-    };
-    sendResponseSync(response);
-  }
+  const argsBuffer = Buffer.from(args, "base64");
+  const result = curModule.instance.exports[name](argsBuffer);
+  log().info(result, "result");
+  const response = {
+    code: 0,
+    jsonrpc: "2.0",
+    index,
+    result: result,
+  };
+  sendResponseSync(response);
+  requestCache.push(index);
 
 };

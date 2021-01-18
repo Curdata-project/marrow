@@ -100,3 +100,12 @@ pub fn loader(bytes: &[u8]) -> LoadResult {
 
     result.clone()
 }
+
+#[no_mangle]
+pub extern "C" fn call_loader_callback_fn(
+    result: i32,
+    cb: unsafe extern "C" fn(*mut c_void, i32),
+    user_data: *mut c_void,
+) {
+    unsafe { cb(user_data, result) }
+}
