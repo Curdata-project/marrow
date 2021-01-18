@@ -6,12 +6,13 @@ import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
 import { _sql_run_callback, _sql_query_callback, _sql_operate_callback } from "./sqlite";
-import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run } from "./utils";
+import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run, _callback_number } from "./utils";
 
 import { startServer, startTest, methodsList } from "./rpc/server";
 import { log } from "./utils/log";
 
 export let wasm_exports: any;
+export let wasm_modules_amount: number;
 
 const wstd = {
   print,
@@ -23,11 +24,13 @@ const wstd = {
   _gen_rand32_callback,
   _load_callback,
   _load_run,
+  _callback_number,
 };
 
 const env: any = {};
 
 export const initModule = async (module: Module) => {
+  log().info(module.name, "module begin init");
   const import_object: any = {
     wstd,
     mw_rt,
@@ -48,13 +51,13 @@ export const initModule = async (module: Module) => {
       env[module.name][curModuleExpose[i]] = () => {
         return function (index: number, ptr: number, length: number) {
           curWasmExport(index, ptr, length);
-        }
+        };
       };
     }
     instance.exports._entry();
     return instance;
   } catch (error) {
-    log().error(error);
+    log().error("module init error", error);
   }
 };
 
@@ -63,5 +66,6 @@ export const test = async (modules: Module[]) => {
 };
 
 export const run = async (modules: Module[]) => {
+  wasm_modules_amount = modules.length;
   startServer(modules);
 };

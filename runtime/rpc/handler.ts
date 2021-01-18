@@ -41,7 +41,7 @@ export const handler = (message: IMessage) => {
 
   const argsBuffer = Buffer.from(args, "base64");
   const result = curModule.instance.exports[name](argsBuffer);
-  log().info(result, "result")
+  log().info(result, "result");
   const response = {
     code: 0,
     jsonrpc: "2.0",

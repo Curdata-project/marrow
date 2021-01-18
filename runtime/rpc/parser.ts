@@ -1,6 +1,10 @@
 import { promises as fs } from "fs";
+import * as events from "events";
+
 import { initModule } from "../index";
 import { log } from "../utils/log";
+
+export const event = new events.EventEmitter();
 
 export const loadJson = async (folder: string) => {
   try {
@@ -27,13 +31,19 @@ export const wasmParser = async (modules: Modules): Promise<ParseModuleList> => 
 
   const ordered = depsParser(modules);
 
-  for (let i = 0; i < ordered.length; i++) {
-    const instance = await initModule(ordered[i]);
+  event.on("next_wasm_init", async (index: number) => {
+    const instance = await initModule(ordered[index]);
     parseModules.push({
-      name: ordered[i].name,
+      name: ordered[index].name,
       instance,
     });
-  }
+  });
+
+  const instance = await initModule(ordered[0]);
+  parseModules.push({
+    name: ordered[0].name,
+    instance,
+  });
 
   return parseModules;
 };

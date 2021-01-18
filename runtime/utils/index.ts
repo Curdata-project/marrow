@@ -1,9 +1,8 @@
 import * as util from "util";
-import * as crypto from "crypto";
-import * as protobuf from "protobufjs";
 
-import { wasm_exports } from "../index";
+import { wasm_exports, wasm_modules_amount } from "../index";
 import { log } from "../utils/log";
+import { event } from "../rpc/parser";
 
 export const setValue = (value: string) => {
   const textEncoder = new util.TextEncoder();
@@ -37,24 +36,7 @@ export const _get_timestamp = () => {
   return Date.now();
 };
 
-export const _gen_rand32_callback = (fn: number, addr: number) => {
-  const root = protobuf.loadSync("common/proto/common.proto");
-  const Sql = root.lookupType("Sql");
-  const payload: any = {
-    sql: "hello rust ~",
-    params: []
-  };
-  const protomessage = Sql.create(payload);
-  const buffer = Buffer.from("hello rust ~");
-  // const buffer = Sql.encode(protomessage).finish();
-  log().info(new Uint8Array(buffer));
-  // const target = new Uint8Array(buffer).slice(0, 4);
-  // const textdeocde = new util.TextDecoder();
-  // console.log(textdeocde.decode(target));
-  const { ptr, length } = setValueByBytes(buffer);
-  wasm_exports.call_gen_rand32_callback_fn(ptr, length, fn, addr);
-  wasm_exports._wasm_free(ptr, length);
-};
+export const _gen_rand32_callback = (fn: number, addr: number) => {};
 
 export const _load_callback = () => {
 
@@ -62,4 +44,19 @@ export const _load_callback = () => {
 
 export const _load_run = () => {
 
+};
+
+let wasm_init_next = 1;
+
+// When the previous wasm init is completed, this method will
+// be notified to call the next wasm init
+export const _callback_number = (index: number, num: number) => {
+  if (wasm_init_next >= wasm_modules_amount) {
+    log().info("wasm modules init complate");
+    return;
+  } else {
+    log().info(`wasm entry callback, begin init module ${wasm_init_next}`);
+    event.emit("next_wasm_init", wasm_init_next);
+    wasm_init_next++;
+  }
 };

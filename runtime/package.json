@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "NODE_ENV=development nodemon index.ts",
-    "build": "node_modules/typescript/bin/tsc",
+    "build": "npm run lint && npm run test && node_modules/typescript/bin/tsc",
     "lint": "node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json --force",
     "lint:fix": "node_modules/tslint/bin/tslint -c tslint.json -p tsconfig.json --fix --force",
     "test": "jest"
