@@ -25,7 +25,8 @@ const __callback_usize = (index: number, result: number) => {
 };
 
 const __callback_bytes = (index: number, ptr: number, length: number) => {
-
+  // todo: use protobuf decode result
+  log().info(index, ptr, length, "from notify bytes");
 };
 
 const __callback_null = (index: number) => {

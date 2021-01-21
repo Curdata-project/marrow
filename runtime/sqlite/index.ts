@@ -8,7 +8,6 @@ import { log } from "../utils/log";
 const db = new sqlite.Database("test.db");
 
 export const  _sql_run_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
-  log().info("reviced sql from wasm");
   const Sql =  getSqlByProto(ptr, path_length).toJSON();
   log().info(Sql.sql, "sql");
   db.run(Sql.sql, (err) => {
@@ -27,12 +26,15 @@ export const  _sql_run_callback = (ptr: number, path_length: number, fn: number,
 
 export const _sql_query_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
   const sql = getValue(ptr, path_length);
+  log().info(sql, "db.all sql");
   db.all(sql, (err, data) => {
     if (err) {
+      log().info(err, "db.all sql fail");
       const { ptr, length } = setValue("fail");
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
       wasm_exports._wasm_free(ptr, length);
     } else {
+      log().info(data, "db.all sql success");
       const { ptr, length } = setValue(JSON.stringify(data));
       wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
       wasm_exports._wasm_free(ptr, length);

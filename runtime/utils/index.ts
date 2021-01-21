@@ -3,6 +3,7 @@ import * as util from "util";
 import { wasm_exports, wasm_modules_amount } from "../index";
 import { log } from "../utils/log";
 import { event } from "../rpc/parser";
+import { getContract, runContract } from "../contract";
 
 export const setValue = (value: string) => {
   const textEncoder = new util.TextEncoder();
@@ -38,12 +39,14 @@ export const _get_timestamp = () => {
 
 export const _gen_rand32_callback = (fn: number, addr: number) => {};
 
-export const _load_callback = () => {
-
+export const _load_callback = async (ptr: number, size: number, cb: number, user_data: number) => {
+  const index = await getContract(ptr, size);
+  wasm_exports.call_loader_callback_fn(index, cb, user_data);
 };
 
-export const _load_run = () => {
-
+export const _load_run = (index: number, ptr: number, size: number) => {
+  const result = runContract(index, ptr, size);
+  return result;
 };
 
 let wasm_init_next = 1;
