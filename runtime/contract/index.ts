@@ -1,6 +1,6 @@
 import { wasm_exports } from "../index";
 
-let contractList: any[] = [];
+const contractList: any[] = [];
 
 export const getContract = async (ptr: number, length: number) => {
   const buffer = wasm_exports.memory.buffer.slice(ptr, ptr + length);

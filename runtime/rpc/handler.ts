@@ -4,8 +4,6 @@ import { modulesNameIndex, modulesList, methodsList } from "./server";
 import { sendResponseSync } from "../notify";
 import { log } from "../utils/log";
 import { setValueByBytes } from "../utils/index";
-import { wasm_exports } from "../index";
-import { common } from "protobufjs";
 
 export let requestCache: RequestCache[] = [];
 
@@ -41,7 +39,7 @@ export const handler = (message: IMessage) => {
 
   // get module and method for request
   const curModule = modulesList.find(item => item.name = module);
-  const curMethod = methodsList[module].find((item: any) => item.name === name)
+  const curMethod = methodsList[module].find((item: any) => item.name === name);
 
   if (!curMethod) {
     return {
@@ -60,9 +58,9 @@ export const handler = (message: IMessage) => {
   }
 
   const finalArgs = argsParse(index, args);
-  
+
   curModule.instance.exports[name](...finalArgs);
-  
+
   const response = {
     code: 0,
     jsonrpc: "2.0",
@@ -96,4 +94,4 @@ const argsParse = (index: number, args: any[]): number[] => {
   }
 
   return argsHandled;
-}
+};
