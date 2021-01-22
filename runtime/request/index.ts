@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { wasm_exports } from "../index";
+import { wasm_exports } from "../rpc/handler";
 import { getValue, setValue } from "../utils";
 
 export const _request_callback = (ptr: number, path_length: number, fn: number, addr: number) => {

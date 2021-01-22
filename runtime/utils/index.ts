@@ -1,9 +1,10 @@
 import * as util from "util";
 
-import { wasm_exports, wasm_modules_amount } from "../index";
+import { wasm_modules_amount } from "../index";
 import { log } from "../utils/log";
 import { event } from "../rpc/parser";
 import { getContract, runContract } from "../contract";
+import { wasm_exports } from "../rpc/handler";
 
 export const setValue = (value: string) => {
   const textEncoder = new util.TextEncoder();

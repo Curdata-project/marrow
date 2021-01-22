@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as util from "util";
-import { wasm_exports } from "../index";
+import { wasm_exports } from "../rpc/handler";
 
 export const _read_file_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
   const value = wasm_exports.memory.buffer.slice(ptr, ptr + path_length);

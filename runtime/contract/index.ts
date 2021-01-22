@@ -1,4 +1,4 @@
-import { wasm_exports } from "../index";
+import { wasm_exports } from "../rpc/handler";
 
 const contractList: any[] = [];
 

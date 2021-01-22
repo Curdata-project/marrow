@@ -11,7 +11,8 @@ import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run, _callb
 import { startServer, startTest, methodsList } from "./rpc/server";
 import { log } from "./utils/log";
 
-export let wasm_exports: any;
+import { wasm_exports, changeExports } from "./rpc/handler";
+
 export let wasm_modules_amount: number;
 
 const wstd = {
@@ -43,7 +44,7 @@ export const initModule = async (module: Module) => {
   try {
     const wasm = fs.readFileSync(module.path);
     const { instance } = await WebAssembly.instantiate(wasm, import_object);
-    wasm_exports = instance.exports;
+    changeExports(instance.exports);
     const curModuleExpose = methodsList[module.name].map((item: Method) => item.name);
     env[module.name] = {};
     for (let i = 0; i < curModuleExpose.length; i ++) {

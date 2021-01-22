@@ -1,5 +1,5 @@
 import * as util from "util";
-import { wasm_exports } from "../index";
+import { wasm_exports } from "../rpc/handler";
 import { log } from "../utils/log";
 
 export const print = (ptr: number, length: number) => {

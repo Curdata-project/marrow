@@ -1,7 +1,7 @@
 import * as sqlite from "sqlite3";
 import * as protobuf from "protobufjs";
 
-import { wasm_exports } from "../index";
+import { wasm_exports } from "../rpc/handler";
 import { getValue, setValue, getValueByBytes } from "../utils";
 import { log } from "../utils/log";
 

@@ -7,6 +7,12 @@ import { setValueByBytes } from "../utils/index";
 
 export let requestCache: RequestCache[] = [];
 
+export let wasm_exports: any;
+
+export const changeExports = (next: any) => {
+  wasm_exports = next;
+};
+
 export const handler = (message: IMessage) => {
   const requestData: any = JSON.parse(message.utf8Data);
 
@@ -40,6 +46,8 @@ export const handler = (message: IMessage) => {
   // get module and method for request
   const curModule = modulesList.find(item => item.name = module);
   const curMethod = methodsList[module].find((item: any) => item.name === name);
+
+  wasm_exports = curModule.instance.exports;
 
   if (!curMethod) {
     return {
