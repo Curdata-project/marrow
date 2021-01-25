@@ -26,26 +26,15 @@ export const loadJson = async (folder: string) => {
   }
 };
 
-export const wasmParser = async (modules: Modules): Promise<ParseModuleList> => {
-  const parseModules: ParseModuleList = [];
+export const wasmParser = async (modules: Modules) => {
 
   const ordered = depsParser(modules);
 
   event.on("next_wasm_init", async (index: number) => {
-    const instance = await initModule(ordered[index]);
-    parseModules.push({
-      name: ordered[index].name,
-      instance,
-    });
+    await initModule(ordered[index]);
   });
 
-  const instance = await initModule(ordered[0]);
-  parseModules.push({
-    name: ordered[0].name,
-    instance,
-  });
-
-  return parseModules;
+  await initModule(ordered[0]);
 };
 
 export const depsParser = (modules: Modules): Modules => {

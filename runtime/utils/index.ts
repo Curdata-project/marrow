@@ -4,9 +4,10 @@ import { wasm_modules_amount } from "../index";
 import { log } from "../utils/log";
 import { event } from "../rpc/parser";
 import { getContract, runContract } from "../contract";
-import { wasm_exports } from "../rpc/handler";
+import { getCurMethod, getWasmExport } from "../storage";
 
 export const setValue = (value: string) => {
+  const wasm_exports = getWasmExport();
   const textEncoder = new util.TextEncoder();
   const typedArray = textEncoder.encode(value);
   const ptr = wasm_exports._wasm_malloc(typedArray.length);
@@ -16,12 +17,14 @@ export const setValue = (value: string) => {
 };
 
 export const getValue = (ptr: number, length: number) => {
+  const wasm_exports = getWasmExport();
   const value = wasm_exports.memory.buffer.slice(ptr, ptr + length);
   const utf8decoder = new util.TextDecoder();
   return utf8decoder.decode(value);
 };
 
 export const setValueByBytes = (bytes: any) => {
+  const wasm_exports = getWasmExport();
   const typedArray = new Uint8Array(bytes);
   const ptr = wasm_exports._wasm_malloc(typedArray.length);
   const Uint8Memory = new Uint8Array(wasm_exports.memory.buffer);
@@ -30,6 +33,7 @@ export const setValueByBytes = (bytes: any) => {
 };
 
 export const getValueByBytes = (ptr: number, length: number) => {
+  const wasm_exports = getWasmExport();
   const buffer = wasm_exports.memory.buffer.slice(ptr, ptr + length);
   return buffer;
 };
@@ -41,6 +45,8 @@ export const _get_timestamp = () => {
 export const _gen_rand32_callback = (fn: number, addr: number) => {};
 
 export const _load_callback = async (ptr: number, size: number, cb: number, user_data: number) => {
+  const wasm_exports = getWasmExport();
+  console.log(ptr, size, cb, user_data, "from load callback");
   const index = await getContract(ptr, size);
   wasm_exports.call_loader_callback_fn(index, cb, user_data);
 };

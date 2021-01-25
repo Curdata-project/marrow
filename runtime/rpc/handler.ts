@@ -1,23 +1,19 @@
 import { IMessage } from "websocket";
 
-import { modulesNameIndex, modulesList, methodsList } from "./server";
+import { isModuleExist, getWasmExport, isMethodExits, getCurMethod, changeCurWasm } from "../storage";
 import { sendResponseSync } from "../notify";
 import { log } from "../utils/log";
 import { setValueByBytes } from "../utils/index";
 
 export let requestCache: RequestCache[] = [];
 
-export let wasm_exports: any;
-
-export const changeExports = (next: any) => {
-  wasm_exports = next;
-};
-
 export const handler = (message: IMessage) => {
   const requestData: any = JSON.parse(message.utf8Data);
 
   log().info("receive a new message 📧", requestData.index);
   const { index, type, module, name, args } = requestData;
+
+  changeCurWasm(module);
 
   if (!index || !type || !name || !args) {
     return {
@@ -35,27 +31,24 @@ export const handler = (message: IMessage) => {
     };
   }
 
-  if (!modulesNameIndex.includes(module)) {
+  if (!isModuleExist(module)) {
     return {
       code: 32602,
-      message: "The module of method does not exist or is invalid",
+      message: "The module does not exist or is invalid",
       index,
     };
   }
 
-  // get module and method for request
-  const curModule = modulesList.find(item => item.name = module);
-  const curMethod = methodsList[module].find((item: any) => item.name === name);
-
-  wasm_exports = curModule.instance.exports;
-
-  if (!curMethod) {
+  if (!isMethodExits(module, name)) {
     return {
       code: 32602,
       message: "The method does not exist or is invalid",
       index,
     };
   }
+
+  const wasm_exports = getWasmExport(module);
+  const curMethod = getCurMethod(module, name);
 
   if (curMethod.arguments.length !== args.length) {
     return {
@@ -67,7 +60,7 @@ export const handler = (message: IMessage) => {
 
   const finalArgs = argsParse(index, args);
 
-  curModule.instance.exports[name](...finalArgs);
+  wasm_exports[name](...finalArgs);
 
   const response = {
     code: 0,

@@ -1,9 +1,11 @@
-import { wasm_exports } from "../rpc/handler";
+import { getWasmExport } from "../storage";
 
 const contractList: any[] = [];
 
 export const getContract = async (ptr: number, length: number) => {
+  const wasm_exports = getWasmExport();
   const buffer = wasm_exports.memory.buffer.slice(ptr, ptr + length);
+  console.log(buffer, ptr, length, "from get contract");
   const { instance } = await WebAssembly.instantiate(buffer, {});
   contractList.push(instance);
   return contractList.length - 1;

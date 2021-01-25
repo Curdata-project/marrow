@@ -4,20 +4,16 @@ import * as http from "http";
 import { handler } from "./handler";
 import { loadJson, wasmParser } from "./parser";
 import { log } from "../utils/log";
+import { initMethodsList } from "../storage";
 
 export let socket: connection;
-
-export let methodsList: any;
-export let modulesList: ParseModuleList;
-
-export let modulesNameIndex: string[];
 
 // For Make Test
 export const startTest = async (modules: Modules) => {
   try {
     log().info("begin parser json");
     const result = await loadJson("target/abi/");
-    methodsList = result;
+    initMethodsList(result);
     log().success("json files parser success 🌟");
   } catch (error) {
     log().error("json parser fail", error);
@@ -25,9 +21,7 @@ export const startTest = async (modules: Modules) => {
   }
 
   try {
-    const result = await wasmParser(modules);
-    modulesList = result;
-    modulesNameIndex = result.map(item => item.name);
+    await wasmParser(modules);
     log().success("wasm files parser success 🦀️");
   } catch (error) {
     log().error("wasm parser fail", error);
@@ -40,7 +34,7 @@ export const startServer = async (modules: Modules) => {
   // load .json
   try {
     const result = await loadJson("target/abi/");
-    methodsList = result;
+    initMethodsList(result);
     log().success("json files parser success 🌟");
   } catch (error) {
     log().error("json parser fail", error);
@@ -49,9 +43,7 @@ export const startServer = async (modules: Modules) => {
 
   // load .wasm
   try {
-    const result = await wasmParser(modules);
-    modulesList = result;
-    modulesNameIndex = result.map(item => item.name);
+    await wasmParser(modules);
     log().success("wasm files parser success 🦀️");
   } catch (error) {
     log().error("wasm parser fail", error);
@@ -91,6 +83,6 @@ export const startServer = async (modules: Modules) => {
 
   });
 
-  httpServer.listen(3003, () => { log().success("server is running on 3003 🚀"); });
+  httpServer.listen(3004, () => { log().success("server is running on 3003 🚀"); });
 };
 

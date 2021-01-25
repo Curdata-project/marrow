@@ -1,9 +1,10 @@
 import axios from "axios";
 
-import { wasm_exports } from "../rpc/handler";
+import { getWasmExport } from "../storage";
 import { getValue, setValue } from "../utils";
 
 export const _request_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
+  const wasm_exports = getWasmExport();
   const value = getValue(ptr, path_length);
   const arg = JSON.parse(value);
   axios({...arg}).then(result => {

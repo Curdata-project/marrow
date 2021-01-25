@@ -1,13 +1,14 @@
 import * as sqlite from "sqlite3";
 import * as protobuf from "protobufjs";
 
-import { wasm_exports } from "../rpc/handler";
+import { getWasmExport } from "../storage";
 import { getValue, setValue, getValueByBytes } from "../utils";
 import { log } from "../utils/log";
 
 const db = new sqlite.Database("test.db");
 
 export const  _sql_run_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
+  const wasm_exports = getWasmExport();
   const Sql =  getSqlByProto(ptr, path_length).toJSON();
   log().info(Sql.sql, "sql");
   db.run(Sql.sql, (err) => {
@@ -25,6 +26,7 @@ export const  _sql_run_callback = (ptr: number, path_length: number, fn: number,
 };
 
 export const _sql_query_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
+  const wasm_exports = getWasmExport();
   const sql = getValue(ptr, path_length);
   log().info(sql, "db.all sql");
   db.all(sql, (err, data) => {
@@ -43,6 +45,7 @@ export const _sql_query_callback = (ptr: number, path_length: number, fn: number
 };
 
 export const _sql_operate_callback = (ptr: number, size: number, fn: number, addr: number) => {
+  const wasm_exports = getWasmExport();
   const tableName = getValue(ptr, size);
   log().info(`judge table ${tableName} does it exist`);
   db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}'`, (error, row) => {
