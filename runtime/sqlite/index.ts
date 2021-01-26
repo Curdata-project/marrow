@@ -7,64 +7,70 @@ import { log } from "../utils/log";
 
 const db = new sqlite.Database("test.db");
 
-export const  _sql_run_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
-  const wasm_exports = getWasmExport();
-  const Sql =  getSqlByProto(ptr, path_length).toJSON();
-  log().info(Sql.sql, "sql");
-  db.run(Sql.sql, (err) => {
-    if (err) {
-      log().error(err, "err");
-      const { ptr, length } = setValue("fail");
-      wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
-      wasm_exports._wasm_free(ptr, length);
-    } else {
-      const { ptr, length } = setValue("ok");
-      wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
-      wasm_exports._wasm_free(ptr, length);
-    }
-  });
+export const  _sql_run_callback = (moduleName: string) => {
+  return function _sql_run_callback (ptr: number, path_length: number, fn: number, addr: number) {
+    const wasm_exports = getWasmExport(moduleName);
+    const Sql =  getSqlByProto(moduleName, ptr, path_length).toJSON();
+    log().info(Sql.sql, "sql");
+    db.run(Sql.sql, (err) => {
+      if (err) {
+        log().error(err, "err");
+        const { ptr, length } = setValue(moduleName, "fail");
+        wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+        wasm_exports._wasm_free(ptr, length);
+      } else {
+        const { ptr, length } = setValue(moduleName, "ok");
+        wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+        wasm_exports._wasm_free(ptr, length);
+      }
+    });
+  }
 };
 
-export const _sql_query_callback = (ptr: number, path_length: number, fn: number, addr: number) => {
-  const wasm_exports = getWasmExport();
-  const sql = getValue(ptr, path_length);
-  log().info(sql, "db.all sql");
-  db.all(sql, (err, data) => {
-    if (err) {
-      log().info(err, "db.all sql fail");
-      const { ptr, length } = setValue("fail");
-      wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
-      wasm_exports._wasm_free(ptr, length);
-    } else {
-      log().info(data, "db.all sql success");
-      const { ptr, length } = setValue(JSON.stringify(data));
-      wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
-      wasm_exports._wasm_free(ptr, length);
-    }
-  });
+export const _sql_query_callback = (moduleName: string) => {
+  return function _sql_query_callback (ptr: number, path_length: number, fn: number, addr: number) {
+    const wasm_exports = getWasmExport(moduleName);
+    const sql = getValue(moduleName, ptr, path_length);
+    log().info(sql, "db.all sql");
+    db.all(sql, (err, data) => {
+      if (err) {
+        log().info(err, "db.all sql fail");
+        const { ptr, length } = setValue(moduleName, "fail");
+        wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+        wasm_exports._wasm_free(ptr, length);
+      } else {
+        log().info(data, "db.all sql success");
+        const { ptr, length } = setValue(moduleName, JSON.stringify(data));
+        wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
+        wasm_exports._wasm_free(ptr, length);
+      }
+    }); 
+  }
 };
 
-export const _sql_operate_callback = (ptr: number, size: number, fn: number, addr: number) => {
-  const wasm_exports = getWasmExport();
-  const tableName = getValue(ptr, size);
-  log().info(`judge table ${tableName} does it exist`);
-  db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}'`, (error, row) => {
-    if (error) {
-      log().error(error);
-    }
-    if (row === undefined) {
-      log().info(`${tableName}表不存在`);
-      wasm_exports.call_sql_operate_callback_fn(1, fn, addr);
-    } else {
-      log().info(`${tableName}表存在`);
-      wasm_exports.call_sql_operate_callback_fn(0, fn, addr);
-    }
-  });
+export const _sql_operate_callback = (moduleName: string) => {
+  return function _sql_operate_callback (ptr: number, size: number, fn: number, addr: number) {
+    const wasm_exports = getWasmExport(moduleName);
+    const tableName = getValue(moduleName, ptr, size);
+    log().info(`judge table ${tableName} does it exist`);
+    db.get(`SELECT name FROM sqlite_master WHERE type='table' AND name='${tableName}'`, (error, row) => {
+      if (error) {
+        log().error(error);
+      }
+      if (row === undefined) {
+        log().info(`${tableName}表不存在`);
+        wasm_exports.call_sql_operate_callback_fn(1, fn, addr);
+      } else {
+        log().info(`${tableName}表存在`);
+        wasm_exports.call_sql_operate_callback_fn(0, fn, addr);
+      }
+    });
+  };
 };
 
-const getSqlByProto = (ptr: number, length: number) => {
+const getSqlByProto = (moduleName: string, ptr: number, length: number) => {
   log().info(ptr, length, "sql proto from wasm");
-  const buffer = getValueByBytes(ptr, length);
+  const buffer = getValueByBytes(moduleName, ptr, length);
   const typedArray = new Uint8Array(buffer);
   try {
     const root = protobuf.loadSync("common/proto/common.proto");

@@ -11,32 +11,30 @@ import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run, _callb
 import { startServer, startTest } from "./rpc/server";
 import { log } from "./utils/log";
 
-import { getModuleMethods, changeCurWasm, getWasmExport, addModuleInstance } from "./storage";
+import { getModuleMethods, getWasmExport, addModuleInstance } from "./storage";
 
 export let wasm_modules_amount: number;
 
-const wstd = {
-  print,
-  _read_file_callback,
-  _request_callback,
-  _sql_run_callback,
-  _sql_query_callback,
-  _sql_operate_callback,
-  _gen_rand32_callback,
-  _load_callback,
-  _load_run,
-  _callback_number,
-};
-
-let env: any = {};
+const wstd = (moduleName: string) => {
+  return {
+    print: print(moduleName),
+    _read_file_callback,
+    _request_callback: _request_callback(moduleName),
+    _sql_run_callback: _sql_run_callback(moduleName),
+    _sql_query_callback: _sql_query_callback(moduleName),
+    _sql_operate_callback: _sql_operate_callback(moduleName),
+    _gen_rand32_callback,
+    _load_callback: _load_callback(moduleName),
+    _load_run,
+    _callback_number,
+  }
+}
 
 export const initModule = async (module: Module) => {
   log().info(module.name, "module begin init");
 
-  const import_object = importGenerate(module);
-
-  const moduleExpose = getModuleMethods(module.name);
-  
+  let import_object = importGenerate(module);
+  console.log(import_object, "🤔");
 
   try {
     const wasm = fs.readFileSync(module.path);
@@ -45,9 +43,6 @@ export const initModule = async (module: Module) => {
       name: module.name,
       instance: instance,
     });
-    changeCurWasm(module.name);
-
-    envControl(instance, moduleExpose, module.name);
     
     instance.exports._entry();
   } catch (error) {
@@ -57,42 +52,73 @@ export const initModule = async (module: Module) => {
 
 const importGenerate = (module: Module) => {
   let import_object: any = {
-    wstd,
+    wstd: wstd(module.name),
     mw_rt,
   };
+
   if (module.deps.length === 0) {
     return import_object;
   } else {
-    for (let i = 0; i < module.deps.length; i++) {
-      import_object[module.deps[i]] = env[module.deps[i]];
+    for (let dep of module.deps) {
+
+      import_object[dep] = {};
+
+      const moduleExpose = getModuleMethods(dep);
+
+      for (let expose of moduleExpose) {
+        let finalArgs: any[] = ["index"];
+
+        const argsDefined = expose.arguments;
+
+        if (argsDefined.length !== 0) {
+          for (let arg of argsDefined) {
+            if (arg.type === "i32") {
+              finalArgs.push("number");
+            }
+            if (arg.type === "bytes") {
+              finalArgs = finalArgs.concat(["ptr", "length"]);
+            }
+          }
+        };
+
+        const ptrIndex = finalArgs.findIndex(item => item === "ptr");
+
+        // from: module.name
+        // to: dep
+        import_object[dep][expose.name] = (...finalArgs: any) => {
+          console.log(finalArgs, ptrIndex, "_______________");
+
+          const from_exports = getWasmExport(dep);
+          const to_exports = getWasmExport(module.name);
+
+          if (ptrIndex !== -1) {
+            const ptrValue = finalArgs[ptrIndex];
+            const lengthValue = finalArgs[ptrIndex + 1];
+            console.log(to_exports);
+            const memory = to_exports.memory.buffer.slice(ptrValue, ptrValue + lengthValue);
+            console.log(memory, "memory 1111111111111")
+            const typedArray = new Uint8Array(memory);
+
+            const ptr = from_exports._wasm_malloc(typedArray.length);
+            console.log(ptr, typedArray.length, "申请的 ptr");
+            const Uint8Memory = new Uint8Array(from_exports.memory.buffer);
+            Uint8Memory.subarray(ptr, ptr + typedArray.length).set(typedArray);
+
+            finalArgs[ptrIndex] = ptr;
+            finalArgs[ptrIndex + 1] = typedArray.length;
+            console.log(finalArgs, "++++++++++++++++++++++++++++")
+            console.log(to_exports, expose.name, "😂");
+            from_exports[expose.name](...finalArgs);
+          } else {
+            from_exports[expose.name](...finalArgs);
+          }
+        }
+
+      }
+
+
     }
     return import_object;
-  }
-};
-
-const envControl = (instance: WebAssembly.Instance, moduleExpose: any, moduleName: string) => {
-  env[moduleName] = {};
-
-  for (let i = 0; i < moduleExpose.length; i ++) {
-    let finalArgs: any[] = ["index"];
-
-    const argsDefined = moduleExpose[i].arguments;
-
-    if (argsDefined.length !== 0) {
-      for (let j = 0; j < argsDefined.length; j++) {
-        if (argsDefined[j].type === "i32") {
-          finalArgs.push("number");
-        }
-        if (argsDefined[j].type === "bytes") {
-          finalArgs = finalArgs.concat(["ptr", "length"]);
-        }
-      }
-    };
-
-    env[moduleName][moduleExpose[i].name] = (...finalArgs: any) => {
-      instance.exports[moduleExpose[i].name](...finalArgs);
-    };
-
   }
 };
 

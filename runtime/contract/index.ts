@@ -2,8 +2,8 @@ import { getWasmExport } from "../storage";
 
 const contractList: any[] = [];
 
-export const getContract = async (ptr: number, length: number) => {
-  const wasm_exports = getWasmExport();
+export const getContract = async (moduleName: string, ptr: number, length: number) => {
+  const wasm_exports = getWasmExport(moduleName);
   const buffer = wasm_exports.memory.buffer.slice(ptr, ptr + length);
   console.log(buffer, ptr, length, "from get contract");
   const { instance } = await WebAssembly.instantiate(buffer, {});

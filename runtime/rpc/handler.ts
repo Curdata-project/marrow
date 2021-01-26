@@ -58,7 +58,7 @@ export const handler = (message: IMessage) => {
     };
   }
 
-  const finalArgs = argsParse(index, args);
+  const finalArgs = argsParse(module, index, args);
 
   wasm_exports[name](...finalArgs);
 
@@ -74,7 +74,7 @@ export const handler = (message: IMessage) => {
 };
 
 // Function parameter checksum processing
-const argsParse = (index: number, args: any[]): number[] => {
+const argsParse = (moduleName: string, index: number, args: any[]): number[] => {
   let argsHandled: number[] = [index];
 
   if (args.length === 0) {
@@ -89,7 +89,7 @@ const argsParse = (index: number, args: any[]): number[] => {
     }
     if (type === "bytes") {
       const base64Decode = Buffer.from(value, "base64");
-      const { ptr, length } = setValueByBytes(base64Decode);
+      const { ptr, length } = setValueByBytes(moduleName, base64Decode);
       argsHandled = argsHandled.concat([ptr, length]);
     }
   }
