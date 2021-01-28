@@ -218,6 +218,7 @@ fn process_async(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
                 runtime.spawn(async move {
                     #(#stmt_vec)*
                     let result = actor.#origin_func_name(#call_args).await;
+                    drop(actor);
                     mw_rt::rpc::#callback_name_ident(index, result);
                 });
             }
@@ -262,6 +263,7 @@ fn process_plain(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
                 let mut actor = ACTOR.actor.borrow_mut();
                 #(#stmt_vec)*
                 actor.#origin_func_name(#call_args)
+                mw_std::debug::println("nnnnnnnnnnnnnnnnnn");
             }
         },
         method_json,

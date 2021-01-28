@@ -11,8 +11,25 @@ export const  _sql_run_callback = (moduleName: string) => {
   return function _sql_run_callback (ptr: number, path_length: number, fn: number, addr: number) {
     const wasm_exports = getWasmExport(moduleName);
     const Sql =  getSqlByProto(moduleName, ptr, path_length).toJSON();
-    log().info(Sql.sql, "sql");
-    db.run(Sql.sql, (err) => {
+    log().info(Sql, "sql");
+    let params = [];
+
+    if (Sql.params) {
+      params = Sql.params.map((item: any) => {
+        if (item.tp === "bytes") {
+          return Buffer.from(item.buffer, "base64");
+        }
+        if (item.tp === "number") {
+          return Number(item.number);
+        }
+        if (item.tp === "string") {
+          return item.s;
+        }
+      });
+    }
+    console.log(params, "转换后的SQL数据");
+
+    db.run(Sql.sql, params, (err: any) => {
       if (err) {
         log().error(err, "err");
         const { ptr, length } = setValue(moduleName, "fail");

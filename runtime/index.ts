@@ -11,7 +11,7 @@ import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run, _callb
 import { startServer, startTest } from "./rpc/server";
 import { log } from "./utils/log";
 
-import { getModuleMethods, getWasmExport, addModuleInstance } from "./storage";
+import { getModuleMethods, getWasmExport, addModuleInstance, setIndex } from "./storage";
 
 export let wasm_modules_amount: number;
 
@@ -25,7 +25,7 @@ const wstd = (moduleName: string) => {
     _sql_operate_callback: _sql_operate_callback(moduleName),
     _gen_rand32_callback,
     _load_callback: _load_callback(moduleName),
-    _load_run,
+    _load_run: _load_run(),
     _callback_number,
   }
 }
@@ -34,7 +34,6 @@ export const initModule = async (module: Module) => {
   log().info(module.name, "module begin init");
 
   let import_object = importGenerate(module);
-  console.log(import_object, "🤔");
 
   try {
     const wasm = fs.readFileSync(module.path);
@@ -82,36 +81,49 @@ const importGenerate = (module: Module) => {
         };
 
         const ptrIndex = finalArgs.findIndex(item => item === "ptr");
+        const cbIndex = finalArgs.findIndex(item => item === "cb");
 
         // from: module.name
         // to: dep
+
         import_object[dep][expose.name] = (...finalArgs: any) => {
-          console.log(finalArgs, ptrIndex, "_______________");
+          let args = finalArgs;
+          console.log(args, "runtime 时拿到的参数")
+
+
+          
+          // get cb、user_data
+          // gen index
+          // if (cbIndex !== -1) {
+            // const cb = args[args.length - 2];
+            // const user_data = args[args.length - 1];
+            const cb = args.pop();
+            const user_data = args.pop();
+            const index = cb + user_data;
+
+            args.unshift(index);
+            
+
+            console.log(args, "改装后的args");
+            setIndex(index, { cb, user_data, moduleName: module.name, funcName: expose.name });
+          // }
 
           const from_exports = getWasmExport(dep);
           const to_exports = getWasmExport(module.name);
 
-          if (ptrIndex !== -1) {
-            const ptrValue = finalArgs[ptrIndex];
-            const lengthValue = finalArgs[ptrIndex + 1];
-            console.log(to_exports);
-            const memory = to_exports.memory.buffer.slice(ptrValue, ptrValue + lengthValue);
-            console.log(memory, "memory 1111111111111")
-            const typedArray = new Uint8Array(memory);
+          const ptrValue = finalArgs[ptrIndex];
+          const lengthValue = finalArgs[ptrIndex + 1];
+          const memory = to_exports.memory.buffer.slice(ptrValue, ptrValue + lengthValue);
+          const typedArray = new Uint8Array(memory);
 
-            const ptr = from_exports._wasm_malloc(typedArray.length);
-            console.log(ptr, typedArray.length, "申请的 ptr");
-            const Uint8Memory = new Uint8Array(from_exports.memory.buffer);
-            Uint8Memory.subarray(ptr, ptr + typedArray.length).set(typedArray);
+          const ptr = from_exports._wasm_malloc(typedArray.length);
+          const Uint8Memory = new Uint8Array(from_exports.memory.buffer);
+          Uint8Memory.subarray(ptr, ptr + typedArray.length).set(typedArray);
 
-            finalArgs[ptrIndex] = ptr;
-            finalArgs[ptrIndex + 1] = typedArray.length;
-            console.log(finalArgs, "++++++++++++++++++++++++++++")
-            console.log(to_exports, expose.name, "😂");
-            from_exports[expose.name](...finalArgs);
-          } else {
-            from_exports[expose.name](...finalArgs);
-          }
+          finalArgs[ptrIndex] = ptr;
+          finalArgs[ptrIndex + 1] = typedArray.length;
+          log().info(expose.name, "准备调用的函数名")
+          from_exports[expose.name](...args);
         }
 
       }

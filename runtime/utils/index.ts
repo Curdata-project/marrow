@@ -53,9 +53,12 @@ export const _load_callback = (moduleName: string) => {
   }
 }
 
-export const _load_run = (index: number, ptr: number, size: number) => {
-  const result = runContract(index, ptr, size);
-  return result;
+export const _load_run = () => {
+  return function _load_run (index: number, ptr: number, size: number) {
+    log().warn("开始 load run");
+    const result = runContract(index, ptr, size);
+    return result;
+  }
 };
 
 let wasm_init_next = 1;

@@ -59,6 +59,7 @@ export const handler = (message: IMessage) => {
   }
 
   const finalArgs = argsParse(module, index, args);
+  log().warn(finalArgs, "rpc final args");
 
   wasm_exports[name](...finalArgs);
 

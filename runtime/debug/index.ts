@@ -5,9 +5,9 @@ import { log } from "../utils/log";
 export const print = (wasmName: string) => {
   return function print (ptr: number, length: number) {
     const wasm_exports = getWasmExport(wasmName);
-    log().note(ptr,length,"js print");
+    log().star(ptr,length,"from js print");
     const value = wasm_exports.memory.buffer.slice(ptr, ptr + length);
     const utf8decoder = new util.TextDecoder();
-    log().note(utf8decoder.decode(value), "value");
+    log().star(utf8decoder.decode(value));
   };
 };

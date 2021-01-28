@@ -1,11 +1,21 @@
 import { log } from "../utils/log";
+import { getIndex, getWasmExport } from "../storage";
 
 const __callback_u32 = (index: number, result: number) => {
 
 };
 
 const __callback_i32 = (index: number, result: number) => {
-  log().info(index, result, "from notify i32");
+  if (index > 10) {
+    log().info(index, result, "from notify i32");
+    const { cb, user_data, moduleName, funcName } = getIndex(index);
+    console.log(cb, user_data, moduleName, funcName, "+++++++++++++++++++++++++")
+    const wasm_exports = getWasmExport(moduleName);
+    log().info(`call_${funcName}`, result, user_data, cb);
+    wasm_exports[`call_${funcName}`](result, user_data, cb);
+  } else {
+    log().info(index, result, "from notify i32");
+  }
 };
 
 const __callback_u64 = (index: number, result: number) => {
