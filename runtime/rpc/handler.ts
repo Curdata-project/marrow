@@ -1,7 +1,6 @@
 import { IMessage } from "websocket";
 
-import { isModuleExist, getWasmExport, isMethodExits, getCurMethod, changeCurWasm } from "../storage";
-import { sendResponseSync } from "../notify";
+import { isModuleExist, getWasmExport, isMethodExits, getCurMethod } from "../storage";
 import { log } from "../utils/log";
 import { setValueByBytes } from "../utils/index";
 
@@ -13,7 +12,6 @@ export const handler = (message: IMessage) => {
   log().info("receive a new message 📧", requestData.index);
   const { index, type, module, name, args } = requestData;
 
-  changeCurWasm(module);
 
   if (!index || !type || !name || !args) {
     return {
@@ -63,13 +61,7 @@ export const handler = (message: IMessage) => {
 
   wasm_exports[name](...finalArgs);
 
-  const response = {
-    code: 0,
-    jsonrpc: "2.0",
-    index,
-    result: "",
-  };
-  sendResponseSync(response);
+  
   requestCache.push(index);
 
 };

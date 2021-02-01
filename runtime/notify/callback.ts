@@ -1,5 +1,6 @@
 import { log } from "../utils/log";
 import { getIndex, getWasmExport } from "../storage";
+import { sendResponseSync } from "./index";
 
 const __callback_u32 = (index: number, result: number) => {
 
@@ -15,6 +16,13 @@ const __callback_i32 = (index: number, result: number) => {
     wasm_exports[`call_${funcName}`](result, user_data, cb);
   } else {
     log().info(index, result, "from notify i32");
+    const response = {
+      code: 0,
+      jsonrpc: "2.0",
+      index,
+      result: "",
+    };
+    sendResponseSync(response);
   }
 };
 
