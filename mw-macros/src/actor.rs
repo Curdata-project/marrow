@@ -263,7 +263,6 @@ fn process_plain(method: ImplItemMethod, name: String) -> (ItemFn, Method) {
                 let mut actor = ACTOR.actor.borrow_mut();
                 #(#stmt_vec)*
                 actor.#origin_func_name(#call_args)
-                mw_std::debug::println("nnnnnnnnnnnnnnnnnn");
             }
         },
         method_json,
