@@ -17,5 +17,5 @@ export const _request_callback = (moduleName: string) => {
       wasm_exports.call_request_callback_fn(ptr, length, fn, addr);
       wasm_exports._wasm_free(ptr, length);
     });
-  }
+  };
 };

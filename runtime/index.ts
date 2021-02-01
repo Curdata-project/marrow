@@ -6,7 +6,7 @@ import { print } from "./debug";
 import { _read_file_callback } from "./fs";
 import { _request_callback } from "./request";
 import { _sql_run_callback, _sql_query_callback, _sql_operate_callback } from "./sqlite";
-import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run, _callback_number, setValueByBytes } from "./utils";
+import { _get_timestamp, _gen_rand32_callback, _load_callback, _load_run, _callback_number } from "./utils";
 
 import { startServer, startTest } from "./rpc/server";
 import { log } from "./utils/log";
@@ -27,13 +27,13 @@ const wstd = (moduleName: string) => {
     _load_callback: _load_callback(moduleName),
     _load_run: _load_run(),
     _callback_number,
-  }
-}
+  };
+};
 
 export const initModule = async (module: Module) => {
   log().info(module.name, "module begin init");
 
-  let import_object = importGenerate(module);
+  const import_object = importGenerate(module);
 
   try {
     const wasm = fs.readFileSync(module.path);
@@ -42,7 +42,7 @@ export const initModule = async (module: Module) => {
       name: module.name,
       instance: instance,
     });
-    
+
     instance.exports._entry();
   } catch (error) {
     log().error("module init error", error);
@@ -50,7 +50,7 @@ export const initModule = async (module: Module) => {
 };
 
 const importGenerate = (module: Module) => {
-  let import_object: any = {
+  const import_object: any = {
     wstd: wstd(module.name),
     mw_rt,
   };
@@ -58,19 +58,19 @@ const importGenerate = (module: Module) => {
   if (module.deps.length === 0) {
     return import_object;
   } else {
-    for (let dep of module.deps) {
+    for (const dep of module.deps) {
 
       import_object[dep] = {};
 
       const moduleExpose = getModuleMethods(dep);
 
-      for (let expose of moduleExpose) {
+      for (const expose of moduleExpose) {
         let finalArgs: any[] = ["index"];
 
         const argsDefined = expose.arguments;
 
         if (argsDefined.length !== 0) {
-          for (let arg of argsDefined) {
+          for (const arg of argsDefined) {
             if (arg.type === "i32") {
               finalArgs.push("number");
             }
@@ -78,35 +78,23 @@ const importGenerate = (module: Module) => {
               finalArgs = finalArgs.concat(["ptr", "length"]);
             }
           }
-        };
+        }
 
         const ptrIndex = finalArgs.findIndex(item => item === "ptr");
-        const cbIndex = finalArgs.findIndex(item => item === "cb");
 
         // from: module.name
         // to: dep
 
         import_object[dep][expose.name] = (...finalArgs: any) => {
-          let args = finalArgs;
-          console.log(args, "runtime 时拿到的参数")
+          const args = finalArgs;
 
+          const cb = args.pop();
+          const user_data = args.pop();
+          const index = cb + user_data;
 
-          
-          // get cb、user_data
-          // gen index
-          // if (cbIndex !== -1) {
-            // const cb = args[args.length - 2];
-            // const user_data = args[args.length - 1];
-            const cb = args.pop();
-            const user_data = args.pop();
-            const index = cb + user_data;
+          args.unshift(index);
 
-            args.unshift(index);
-            
-
-            console.log(args, "改装后的args");
-            setIndex(index, { cb, user_data, moduleName: module.name, funcName: expose.name });
-          // }
+          setIndex(index, { cb, user_data, moduleName: module.name, funcName: expose.name });
 
           const from_exports = getWasmExport(dep);
           const to_exports = getWasmExport(module.name);
@@ -122,9 +110,8 @@ const importGenerate = (module: Module) => {
 
           finalArgs[ptrIndex] = ptr;
           finalArgs[ptrIndex + 1] = typedArray.length;
-          log().info(expose.name, "准备调用的函数名")
           from_exports[expose.name](...args);
-        }
+        };
 
       }
 

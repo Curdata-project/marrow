@@ -10,7 +10,6 @@ const __callback_i32 = (index: number, result: number) => {
   if (index > 10) {
     log().info(index, result, "from notify i32");
     const { cb, user_data, moduleName, funcName } = getIndex(index);
-    console.log(cb, user_data, moduleName, funcName, "+++++++++++++++++++++++++")
     const wasm_exports = getWasmExport(moduleName);
     log().info(`call_${funcName}`, result, user_data, cb);
     wasm_exports[`call_${funcName}`](result, user_data, cb);

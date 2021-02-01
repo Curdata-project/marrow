@@ -1,13 +1,13 @@
 import { log } from "../utils/log";
 
-let modulesList: ParseModuleList = [];
+const modulesList: ParseModuleList = [];
 
 let curWasm: string;
 
 export const getWasmExport = (name?: string): any => {
   const wasmName = name || curWasm;
   log().info(`get ${wasmName} module exports`);
-  
+
   const curModule = modulesList.find(item => item.name === wasmName);
   return curModule.instance.exports;
 };

@@ -27,7 +27,6 @@ export const  _sql_run_callback = (moduleName: string) => {
         }
       });
     }
-    console.log(params, "转换后的SQL数据");
 
     db.run(Sql.sql, params, (err: any) => {
       if (err) {
@@ -41,7 +40,7 @@ export const  _sql_run_callback = (moduleName: string) => {
         wasm_exports._wasm_free(ptr, length);
       }
     });
-  }
+  };
 };
 
 export const _sql_query_callback = (moduleName: string) => {
@@ -61,8 +60,8 @@ export const _sql_query_callback = (moduleName: string) => {
         wasm_exports.call_sql_callback_fn(ptr, length, fn, addr);
         wasm_exports._wasm_free(ptr, length);
       }
-    }); 
-  }
+    });
+  };
 };
 
 export const _sql_operate_callback = (moduleName: string) => {
@@ -75,10 +74,10 @@ export const _sql_operate_callback = (moduleName: string) => {
         log().error(error);
       }
       if (row === undefined) {
-        log().info(`${tableName}表不存在`);
+        log().info(`${tableName} table does not exist`);
         wasm_exports.call_sql_operate_callback_fn(1, fn, addr);
       } else {
-        log().info(`${tableName}表存在`);
+        log().info(`${tableName} table exist`);
         wasm_exports.call_sql_operate_callback_fn(0, fn, addr);
       }
     });

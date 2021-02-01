@@ -61,7 +61,7 @@ export const handler = (message: IMessage) => {
 
   wasm_exports[name](...finalArgs);
 
-  
+
   requestCache.push(index);
 
 };

@@ -1,4 +1,3 @@
-import { common } from "protobufjs";
 
 let methodsList: any = {};
 

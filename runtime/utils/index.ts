@@ -4,7 +4,7 @@ import { wasm_modules_amount } from "../index";
 import { log } from "../utils/log";
 import { event } from "../rpc/parser";
 import { getContract, runContract } from "../contract";
-import { getCurMethod, getWasmExport } from "../storage";
+import { getWasmExport } from "../storage";
 
 export const setValue = (moduleName: string, value: string) => {
   const wasm_exports = getWasmExport(moduleName);
@@ -47,18 +47,17 @@ export const _gen_rand32_callback = (fn: number, addr: number) => {};
 export const _load_callback = (moduleName: string) => {
   return async function _load_callback (ptr: number, size: number, cb: number, user_data: number) {
     const wasm_exports = getWasmExport(moduleName);
-    console.log(ptr, size, cb, user_data, "from load callback");
+    log().info(ptr, size, cb, user_data, "from load callback");
     const index = await getContract(moduleName, ptr, size);
     wasm_exports.call_loader_callback_fn(index, cb, user_data);
-  }
-}
+  };
+};
 
 export const _load_run = () => {
   return function _load_run (index: number, ptr: number, size: number) {
-    log().warn("开始 load run");
     const result = runContract(index, ptr, size);
     return result;
-  }
+  };
 };
 
 let wasm_init_next = 1;
